@@ -20,6 +20,7 @@ model User {
   
   // Relations
   chartAnalyses ChartAnalysis[]
+  portfolios   Portfolio[]
 }
 
 model ChartAnalysis {
