@@ -20,7 +20,7 @@ model User {
   
   // Relations
   chartAnalyses ChartAnalysis[]
-  portfolios   Portfolio[]
+  portfolios   Portfolio[]    @relation("UserPortfolio")
 }
 
 model ChartAnalysis {
@@ -47,7 +47,7 @@ model Portfolio {
   updatedAt DateTime @updatedAt
   
   // Relations
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation("UserPortfolio", fields: [userId], references: [id], onDelete: Cascade)
   
   @@unique([userId, symbol])
 }
