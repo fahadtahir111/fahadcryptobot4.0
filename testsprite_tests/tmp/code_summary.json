@@ -1,0 +1,93 @@
+{
+  "tech_stack": [
+    "TypeScript",
+    "Next.js (App Router)",
+    "React",
+    "Tailwind CSS",
+    "Prisma",
+    "PostgreSQL",
+    "Socket.IO",
+    "Google Generative AI (Gemini 2.5 Flash)"
+  ],
+  "features": [
+    {
+      "name": "Authentication APIs",
+      "description": "Login, signup, logout, and current-user endpoints with JWT/cookies integration.",
+      "files": [
+        "app/api/auth/login/route.ts",
+        "app/api/auth/signup/route.ts",
+        "app/api/auth/logout/route.ts",
+        "app/api/auth/me/route.ts",
+        "contexts/AuthContext.tsx",
+        "lib/auth.ts",
+        "lib/env.ts"
+      ]
+    },
+    {
+      "name": "Admin Credits Management",
+      "description": "Admin endpoint to increment/decrement user credits and log transactions/activities.",
+      "files": [
+        "app/api/admin/credits/route.ts",
+        "prisma/schema.prisma"
+      ]
+    },
+    {
+      "name": "Chart Analysis",
+      "description": "Upload and analyze crypto charts via Gemini service and store analysis results.",
+      "files": [
+        "components/ChartUpload.tsx",
+        "app/api/analyze-chart/route.ts",
+        "lib/geminiService.ts",
+        "lib/utils.ts"
+      ]
+    },
+    {
+      "name": "Analysis History",
+      "description": "List prior analyses for the logged-in user.",
+      "files": [
+        "components/AnalysisHistory.tsx",
+        "app/api/analysis/history/route.ts"
+      ]
+    },
+    {
+      "name": "Portfolio API",
+      "description": "CRUD and retrieval for user portfolios.",
+      "files": [
+        "app/api/portfolio/route.ts",
+        "prisma/schema.prisma"
+      ]
+    },
+    {
+      "name": "Real-time Chat (Socket.IO)",
+      "description": "Client chat widget with online user count; Socket.IO server route.",
+      "files": [
+        "components/Chat.tsx",
+        "pages/api/socketio.ts",
+        "lib/socket.ts"
+      ]
+    },
+    {
+      "name": "UI Shell & Navbar",
+      "description": "Public landing page, dashboard, navbar with credits and AI status.",
+      "files": [
+        "components/Navbar.tsx",
+        "components/Dashboard.tsx",
+        "components/LandingPage.tsx",
+        "app/layout.tsx",
+        "app/page.tsx",
+        "app/globals.css"
+      ]
+    },
+    {
+      "name": "Database & Prisma",
+      "description": "Schema for users, analyses, portfolios, chat messages, credit transactions, admin activity.",
+      "files": [
+        "prisma/schema.prisma",
+        "prisma/migrations/**",
+        "scripts/setup-db.js",
+        "scripts/set-credits.sql"
+      ]
+    }
+  ]
+}
+

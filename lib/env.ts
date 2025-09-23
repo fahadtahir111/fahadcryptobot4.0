@@ -1,5 +1,5 @@
 export const env = {
-  OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY || '',
+  GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
   JWT_SECRET: process.env.JWT_SECRET || 'your-secret-key-here',
   DATABASE_URL: process.env.DATABASE_URL || '',
   NEXTAUTH_URL: process.env.NEXTAUTH_URL || 'http://localhost:3000',
@@ -8,8 +8,8 @@ export const env = {
 export function validateEnv(): boolean {
   const errors: string[] = [];
 
-  if (!env.OPENROUTER_API_KEY) {
-    errors.push('OPENROUTER_API_KEY is required for AI chart analysis');
+  if (!env.GEMINI_API_KEY) {
+    errors.push('GEMINI_API_KEY is required for AI chart analysis');
   }
 
   if (!env.JWT_SECRET || env.JWT_SECRET === 'your-secret-key-here') {

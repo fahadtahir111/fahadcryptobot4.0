@@ -7,12 +7,20 @@
     "build": "prisma generate && prisma migrate deploy && next build",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "deploy:setup": "node scripts/deploy-setup.js",
+    "deploy:vercel": "vercel",
+    "deploy:prod": "vercel --prod",
+    "db:migrate": "prisma migrate deploy",
+    "db:generate": "prisma generate",
+    "db:studio": "prisma studio"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "@gsap/react": "^2.1.2",
     "@hookform/resolvers": "^3.9.0",
     "@next/swc-wasm-nodejs": "13.5.1",
-    "@prisma/client": "^5.7.1",
+    "@prisma/client": "^6.14.0",
     "@radix-ui/react-accordion": "^1.1.2",
     "@radix-ui/react-alert-dialog": "^1.0.5",
     "@radix-ui/react-aspect-ratio": "^1.1.0",
@@ -60,13 +68,12 @@
     "jsonrepair": "^3.13.0",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.539.0",
-    "next": "15.4.6",
+    "next": "^15.5.3",
     "next-auth": "^5.0.0-beta.29",
     "next-themes": "^0.3.0",
-    "openai": "^4.28.0",
+    "ogl": "^1.0.11",
     "pg": "^8.11.3",
     "postcss": "^8",
-    "prisma": "^5.7.1",
     "react": "^18",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18",
@@ -84,6 +91,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@types/pg": "^8.10.9"
+    "@types/pg": "^8.10.9",
+    "prisma": "^6.14.0"
   }
 }

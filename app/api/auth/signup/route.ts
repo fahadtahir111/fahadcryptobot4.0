@@ -49,6 +49,9 @@ export async function POST(request: NextRequest) {
         id: true,
         email: true,
         name: true,
+        credits: true,
+        isAdmin: true,
+        isActive: true,
         createdAt: true,
       },
     });

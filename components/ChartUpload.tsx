@@ -19,9 +19,12 @@ import {
   Loader2,
   Settings
 } from 'lucide-react';
-import { ChartAnalysisResponse } from '@/lib/gpt5Service';
+import { ChartAnalysisResponse } from '@/lib/geminiService';
+import { validateImageFile, formatAnalysisData, getErrorMessage } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function ChartUpload() {
+  const { user, updateCredits, refreshUser } = useAuth();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -29,6 +32,7 @@ export function ChartUpload() {
   const [error, setError] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [symbol, setSymbol] = useState('');
+  const [showCreditDeduction, setShowCreditDeduction] = useState(false);
   const [timeframe, setTimeframe] = useState('');
   const [additionalContext, setAdditionalContext] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -36,34 +40,34 @@ export function ChartUpload() {
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.type.startsWith('image/')) {
-        if (file.size > 10 * 1024 * 1024) { // 10MB limit
-          setError('File size too large. Please select an image under 10MB.');
-          return;
-        }
-        setSelectedFile(file);
-        setError(null);
-        
-        // Create preview
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          setPreview(e.target?.result as string);
-        };
-        reader.readAsDataURL(file);
-      } else {
-        setError('Please select an image file (PNG, JPG, JPEG)');
+      const validation = validateImageFile(file);
+      if (!validation.valid) {
+        setError(validation.error!);
+        return;
       }
+      
+      setSelectedFile(file);
+      setError(null);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setPreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
   const handleDrop = (event: React.DragEvent) => {
     event.preventDefault();
     const file = event.dataTransfer.files[0];
-    if (file && file.type.startsWith('image/')) {
-      if (file.size > 10 * 1024 * 1024) {
-        setError('File size too large. Please select an image under 10MB.');
+    if (file) {
+      const validation = validateImageFile(file);
+      if (!validation.valid) {
+        setError(validation.error!);
         return;
       }
+      
       setSelectedFile(file);
       setError(null);
       
@@ -72,8 +76,6 @@ export function ChartUpload() {
         setPreview(e.target?.result as string);
       };
       reader.readAsDataURL(file);
-    } else {
-      setError('Please drop an image file (PNG, JPG, JPEG)');
     }
   };
 
@@ -84,6 +86,12 @@ export function ChartUpload() {
   const analyzeChart = async () => {
     if (!selectedFile) return;
 
+    // Check if user has enough credits
+    if (user && user.credits < 1) {
+      setError('Insufficient credits. You need at least 1 credit to analyze charts.');
+      return;
+    }
+
     setIsAnalyzing(true);
     setError(null);
 
@@ -91,7 +99,7 @@ export function ChartUpload() {
       // Convert image to base64
       const base64 = await fileToBase64(selectedFile);
       
-      // Call GPT-5 API
+      // Call Gemini 2.5 Flash API
       const response = await fetch('/api/analyze-chart', {
         method: 'POST',
         headers: {
@@ -99,6 +107,7 @@ export function ChartUpload() {
         },
         body: JSON.stringify({
           imageBase64: base64.split(',')[1], // Remove data:image/jpeg;base64, prefix
+          fileType: selectedFile.type,
           symbol: symbol || undefined,
           timeframe: timeframe || undefined,
           additionalContext: additionalContext || undefined,
@@ -123,105 +132,35 @@ export function ChartUpload() {
         throw new Error('No analysis data received from server');
       }
 
-      // Ensure all values are properly formatted before setting state
-      const sanitizedAnalysis = {
-        ...data.analysis,
-        symbol: (() => {
-          const value = data.analysis.symbol;
-          if (typeof value === 'object') {
-            console.log('API returned object for symbol:', value);
-            return JSON.stringify(value) || 'Unknown';
-          }
-          return String(value || 'Unknown');
-        })(),
-        pattern: (() => {
-          const value = data.analysis.pattern;
-          if (typeof value === 'object') {
-            console.log('API returned object for pattern:', value);
-            return JSON.stringify(value) || 'Unknown';
-          }
-          return String(value || 'Unknown');
-        })(),
-        trend: data.analysis.trend || 'neutral',
-        entryPrice: (() => {
-          const value = data.analysis.entryPrice;
-          if (typeof value === 'object') {
-            console.log('API returned object for entryPrice:', value);
-            return JSON.stringify(value) || 'N/A';
-          }
-          return String(value || 'N/A');
-        })(),
-        targetPrice: (() => {
-          const value = data.analysis.targetPrice;
-          if (typeof value === 'object') {
-            console.log('API returned object for targetPrice:', value);
-            return JSON.stringify(value) || 'N/A';
-          }
-          return String(value || 'N/A');
-        })(),
-        stopLoss: (() => {
-          const value = data.analysis.stopLoss;
-          if (typeof value === 'object') {
-            console.log('API returned object for stopLoss:', value);
-            return JSON.stringify(value) || 'N/A';
-          }
-          return String(value || 'N/A');
-        })(),
-        confidence: Number(data.analysis.confidence) || 0,
-        analysis: (() => {
-          const value = data.analysis.analysis;
-          if (typeof value === 'object') {
-            console.log('API returned object for analysis:', value);
-            return JSON.stringify(value) || 'Analysis not available';
-          }
-          return String(value || 'Analysis not available');
-        })(),
-        riskLevel: data.analysis.riskLevel || 'medium',
-        timeframe: (() => {
-          const value = data.analysis.timeframe;
-          if (typeof value === 'object') {
-            console.log('API returned object for timeframe:', value);
-            return JSON.stringify(value) || 'Unknown';
-          }
-          return String(value || 'Unknown');
-        })(),
-        riskRewardRatio: Number(data.analysis.riskRewardRatio) || 1.0,
-        keyLevels: data.analysis.keyLevels || { support: [], resistance: [] },
-        volumeAnalysis: (() => {
-          const value = data.analysis.volumeAnalysis;
-          if (typeof value === 'object') {
-            console.log('API returned object for volumeAnalysis:', value);
-            return JSON.stringify(value) || 'Volume analysis not available';
-          }
-          return String(value || 'Volume analysis not available');
-        })(),
-        technicalIndicators: Array.isArray(data.analysis.technicalIndicators) ? data.analysis.technicalIndicators.map(String) : [],
-        recommendations: Array.isArray(data.analysis.recommendations) ? data.analysis.recommendations.map(String) : [],
-        cryptoContext: (() => {
-          const value = data.analysis.cryptoContext;
-          if (typeof value === 'object') {
-            console.log('API returned object for cryptoContext:', value);
-            return JSON.stringify(value) || 'Market context not available';
-          }
-          return String(value || 'Market context not available');
-        })(),
-        riskFactors: Array.isArray(data.analysis.riskFactors) ? data.analysis.riskFactors.map(String) : [],
-        positionSizing: (() => {
-          const value = data.analysis.positionSizing;
-          if (typeof value === 'object') {
-            console.log('API returned object for positionSizing:', value);
-            return JSON.stringify(value) || 'Position sizing not available';
-          }
-          return String(value || 'Position sizing not available');
-        })()
-      };
+      // Format analysis data using utility function
+      const sanitizedAnalysis = formatAnalysisData(data.analysis);
 
       console.log('Original analysis data:', data.analysis);
       console.log('Sanitized analysis data:', sanitizedAnalysis);
 
       setAnalysis(sanitizedAnalysis);
+      // Notify other components (e.g., history) to refresh
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('analysis:created'));
+      }
+
+      // Refresh user credits after successful analysis
+      if (user) {
+        // Show credit deduction animation
+        setShowCreditDeduction(true);
+        updateCredits(user.credits - 1);
+        
+        // Hide animation after 2 seconds
+        setTimeout(() => setShowCreditDeduction(false), 2000);
+        
+        await refreshUser();
+        // notify navbar to refresh credits immediately
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('credits:refresh'));
+        }
+      }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to analyze chart. Please try again.';
+      const errorMessage = getErrorMessage(err);
       setError(errorMessage);
       console.error('Chart analysis error:', err);
     } finally {
@@ -292,28 +231,52 @@ export function ChartUpload() {
 
   return (
     <div className="space-y-6">
-      <div className="text-center">
-        <h2 className="text-3xl font-bold mb-2">Chart Analysis</h2>
-        <p className="text-muted-foreground">
-          Upload your trading chart and get AI-powered analysis using GPT-5
-        </p>
+      <div className="text-center animate-fade-in-up">
+        <h2 className="text-3xl font-bold mb-2 professional-heading">Chart Analysis</h2>
+            <p className="text-gray-400 professional-text">
+              Upload your trading chart and get AI-powered analysis using Gemini 2.5 Flash
+            </p>
+            
+            {/* Credit Deduction Animation */}
+            {showCreditDeduction && (
+              <div className="mt-4 p-3 bg-yellow-500/20 border border-yellow-500/30 rounded-lg animate-pulse">
+                <div className="flex items-center justify-center space-x-2 text-yellow-400">
+                  <div className="w-2 h-2 bg-yellow-400 rounded-full animate-ping"></div>
+                  <span className="text-sm font-medium">-1 Credit Deducted</span>
+                </div>
+              </div>
+            )}
+        <div className="mt-4 flex justify-center space-x-4 text-sm text-gray-500">
+          <span className="flex items-center">
+            <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+            Supports PNG, JPG, JPEG
+          </span>
+          <span className="flex items-center">
+            <div className="w-2 h-2 bg-blue-400 rounded-full mr-2"></div>
+            Max 10MB file size
+          </span>
+          <span className="flex items-center">
+            <div className="w-2 h-2 bg-purple-400 rounded-full mr-2"></div>
+            Instant analysis
+          </span>
+        </div>
       </div>
 
-      {!analysis ? (
-        <Card className="trading-card">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span className="flex items-center">
-                <Upload className="w-5 h-5 mr-2" />
-                Upload Chart Image
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowSettings(!showSettings)}
-              >
-                <Settings className="w-4 h-4" />
-              </Button>
+          {!analysis ? (
+            <Card className="clean-card hover-lift animate-fade-in-up animate-delay-200">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center">
+                    <Upload className="w-5 h-5 mr-2" />
+                    Upload Chart Image
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowSettings(!showSettings)}
+                  >
+                    <Settings className="w-4 h-4" />
+                  </Button>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -354,16 +317,16 @@ export function ChartUpload() {
                 </div>
               )}
 
-              {/* File Upload Area */}
-              <div
-                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                  selectedFile 
-                    ? 'border-primary bg-primary/5' 
-                    : 'border-muted-foreground/30 hover:border-primary/50'
-                }`}
-                onDrop={handleDrop}
-                onDragOver={handleDragOver}
-              >
+                  {/* File Upload Area */}
+                  <div
+                    className={`border-2 border-dashed rounded-lg p-8 text-center transition-all duration-300 hover-lift ${
+                      selectedFile
+                        ? 'border-white/50 bg-white/5 border-glow'
+                        : 'border-white/30 hover:border-white/50 hover:border-glow'
+                    }`}
+                    onDrop={handleDrop}
+                    onDragOver={handleDragOver}
+                  >
                 {preview ? (
                   <div className="space-y-4">
                     <img 
@@ -403,13 +366,13 @@ export function ChartUpload() {
                   className="hidden"
                 />
                 
-                <Button
-                  variant="outline"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="mt-4"
-                >
-                  Choose File
-                </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="mt-4 border-glow hover-lift"
+                    >
+                      Choose File
+                    </Button>
               </div>
 
               {error && (
@@ -424,22 +387,22 @@ export function ChartUpload() {
                   <Button
                     onClick={analyzeChart}
                     disabled={isAnalyzing}
-                    className="crypto-gradient"
+                    className="professional-button hover-lift"
                   >
                     {isAnalyzing ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Analyzing with GPT-5...
+                        Analyzing with Gemini 2.5 Flash...
                       </>
-                    ) : (
-                      <>
-                        <Brain className="w-4 h-4 mr-2" />
-                        Analyze with GPT-5 AI
-                      </>
-                    )}
+                        ) : (
+                          <>
+                            <Brain className="w-4 h-4 mr-2" />
+                            Analyze with Gemini 2.5 Flash
+                          </>
+                        )}
                   </Button>
                   
-                  <Button variant="outline" onClick={resetForm}>
+                  <Button variant="outline" onClick={resetForm} className="border-glow hover-lift">
                     Reset
                   </Button>
                 </div>
@@ -495,11 +458,11 @@ export function ChartUpload() {
                       return (
                         <>
                           <div className="grid md:grid-cols-2 gap-6">
-                            {/* Basic Info */}
-                            <Card>
-                              <CardHeader>
-                                <CardTitle className="text-lg">Basic Information</CardTitle>
-                              </CardHeader>
+                  {/* Basic Info */}
+                <Card className="clean-card">
+                  <CardHeader>
+                    <CardTitle className="text-lg professional-heading">Basic Information</CardTitle>
+                  </CardHeader>
                               <CardContent className="space-y-3">
                                 <div className="flex justify-between">
                                   <span className="font-medium">Symbol:</span>
@@ -527,9 +490,9 @@ export function ChartUpload() {
               </Card>
 
                 {/* Price Levels */}
-                <Card>
+                <Card className="clean-card">
                   <CardHeader>
-                    <CardTitle className="text-lg">Price Levels</CardTitle>
+                    <CardTitle className="text-lg professional-heading">Price Levels</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <div className="flex justify-between">
@@ -565,9 +528,9 @@ export function ChartUpload() {
               </div>
 
               {/* Crypto Context */}
-              <Card>
+              <Card className="clean-card">
                 <CardHeader>
-                  <CardTitle className="text-lg">Crypto Market Context</CardTitle>
+                  <CardTitle className="text-lg professional-heading">Crypto Market Context</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground mb-3">{String(analysis.cryptoContext || 'Market context not available')}</p>
@@ -591,9 +554,9 @@ export function ChartUpload() {
               </Card>
 
               {/* Key Levels */}
-              <Card>
+              <Card className="clean-card">
                 <CardHeader>
-                  <CardTitle className="text-lg">Key Levels</CardTitle>
+                  <CardTitle className="text-lg professional-heading">Key Levels</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid md:grid-cols-2 gap-6">
@@ -708,9 +671,9 @@ export function ChartUpload() {
               </Card>
 
               {/* Technical Analysis */}
-              <Card>
+              <Card className="clean-card">
                 <CardHeader>
-                  <CardTitle className="text-lg">Technical Analysis</CardTitle>
+                  <CardTitle className="text-lg professional-heading">Technical Analysis</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
@@ -738,9 +701,9 @@ export function ChartUpload() {
               </Card>
 
               {/* Recommendations */}
-              <Card>
+              <Card className="clean-card">
                 <CardHeader>
-                  <CardTitle className="text-lg">Trading Recommendations</CardTitle>
+                  <CardTitle className="text-lg professional-heading">Trading Recommendations</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
@@ -783,7 +746,7 @@ export function ChartUpload() {
 
           {/* Action Buttons */}
           <div className="flex items-center justify-center space-x-4 mt-6">
-            <Button className="crypto-gradient">
+            <Button className="professional-button">
               <Target className="w-4 h-4 mr-2" />
               Generate Signal
             </Button>

@@ -21,8 +21,8 @@ Create `.env.local` file:
 # Database
 DATABASE_URL="postgresql://postgres:your_password@localhost:5432/cryptobot_pro"
 
-# OpenRouter API Key
-OPENROUTER_API_KEY="your_openrouter_api_key_here"
+# Gemini API Key
+GEMINI_API_KEY="your_gemini_api_key_here"
 
 # JWT Secret (generate a secure random string)
 JWT_SECRET="your-super-secure-jwt-secret-key-here"
@@ -37,8 +37,8 @@ npx prisma generate
 npx prisma migrate dev --name init
 ```
 
-## 5. Get OpenRouter API Key
-1. Visit [OpenRouter.ai](https://openrouter.ai)
+## 5. Get Gemini API Key
+1. Visit [Google AI Studio](https://aistudio.google.com)
 2. Sign up and create an API key
 3. Add to `.env.local`
 
@@ -58,4 +58,4 @@ Visit `http://localhost:3000` to see your application!
 - ✅ Responsive design for mobile/desktop
 - ✅ Chart analysis history storage
 - ✅ Professional crypto trading signals
-- ✅ Advanced AI with crypto expertise
+- ✅ Advanced AI with Gemini 2.0 Flash

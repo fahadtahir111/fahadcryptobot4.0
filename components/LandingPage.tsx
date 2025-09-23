@@ -1,320 +1,657 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Navbar } from '@/components/Navbar';
-import { 
-  Brain, 
-  TrendingUp, 
-  Target, 
-  Shield, 
-  Zap, 
-  BarChart3,
-  ArrowRight,
-  Star,
-  Users,
-  Clock
-} from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { Navbar } from './Navbar';
+import { Button } from './ui/button';
 import { 
-  animateCard3D, 
-  animateText, 
-  animateOnScroll, 
-  animateFloating,
-  animatePulse,
-  animateMorphingBackground 
-} from '@/lib/animations';
+  Zap, 
+  BarChart3, 
+  Shield, 
+  Users, 
+  TrendingUp, 
+  ArrowRight, 
+  Play, 
+  Brain, 
+  Target, 
+  Clock,
+  CheckCircle,
+  Star,
+  Code,
+  Database,
+  Cpu,
+  Sparkles,
+  ChevronDown,
+  ExternalLink,
+  Github,
+  Twitter,
+  Linkedin
+} from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 export function LandingPage() {
   const { login } = useAuth();
-  const heroRef = useRef<HTMLDivElement>(null);
-  const featuresRef = useRef<HTMLDivElement>(null);
-  const statsRef = useRef<HTMLDivElement>(null);
-  const ctaRef = useRef<HTMLDivElement>(null);
-  const floatingIconRef = useRef<HTMLDivElement>(null);
+  const [activeSection, setActiveSection] = useState('hero');
+
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+      setActiveSection(sectionId);
+    }
+  };
 
   useEffect(() => {
-    // Initialize animations
-    if (heroRef.current) {
-      animateText(heroRef.current, 'stagger');
-    }
+    const handleScroll = () => {
+      const sections = ['hero', 'features', 'how-it-works', 'pricing', 'testimonials', 'cta'];
+      const scrollPosition = window.scrollY + 100;
 
-    // Animate floating elements
-    if (floatingIconRef.current) {
-      animateFloating(floatingIconRef.current, 20);
-    }
+      for (const section of sections) {
+        const element = document.getElementById(section);
+        if (element) {
+          const { offsetTop, offsetHeight } = element;
+          if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
+            setActiveSection(section);
+            break;
+          }
+        }
+      }
+    };
 
-    // Animate on scroll
-    const animatedElements = document.querySelectorAll('.animate-on-scroll');
-    animateOnScroll(animatedElements, 'fadeInUp');
-
-    // Add 3D effects to cards
-    const cards = document.querySelectorAll('.feature-card');
-    cards.forEach((card) => {
-      animateCard3D(card as HTMLElement);
-    });
-
-    // Animate morphing background
-    const backgroundElement = document.querySelector('.morphing-bg');
-    if (backgroundElement) {
-      animateMorphingBackground(backgroundElement as HTMLElement);
-    }
-
-    // Add pulse animation to stats
-    const statElements = document.querySelectorAll('.stat-item');
-    statElements.forEach((stat, index) => {
-      animatePulse(stat as HTMLElement, 1.05 + (index * 0.02));
-    });
-
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
+    <div className="min-h-screen bg-black text-white">
       {/* Navbar */}
       <Navbar />
-      
-      {/* Animated Background Elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="morphing-bg absolute inset-0 bg-gradient-to-br from-purple-900/20 via-blue-900/20 to-green-900/20"></div>
-        <div className="absolute top-20 left-20 w-40 h-40 bg-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute top-40 right-32 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl animate-pulse delay-1000"></div>
-        <div className="absolute bottom-32 left-32 w-36 h-36 bg-green-500/10 rounded-full blur-2xl animate-pulse delay-2000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-purple-500/5 to-blue-500/5 rounded-full blur-3xl animate-pulse delay-3000"></div>
-      </div>
 
       {/* Hero Section */}
-      <section className="relative z-10 pt-40 pb-20 px-4">
-        <div className="container mx-auto text-center">
-          <div ref={heroRef} className="space-y-8 animate-on-scroll">
-            <div ref={floatingIconRef} className="flex justify-center mb-8">
-              <div className="w-24 h-24 bg-gradient-to-r from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center shadow-2xl shadow-purple-500/25">
-                <Zap className="w-12 h-12 text-white" />
-              </div>
+      <section id="hero" className="relative pt-32 pb-24 px-4 overflow-hidden">
+        {/* Background Effects */}
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(120,119,198,0.1),transparent_70%)]"></div>
+        
+        <div className="container mx-auto text-center relative z-10">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 bg-gray-800/50 border border-gray-700 rounded-full px-4 py-2 mb-8 backdrop-blur-sm">
+            <Sparkles className="w-4 h-4 text-blue-400" />
+            <span className="text-sm text-gray-300">Powered by Gemini 2.5 Flash</span>
+          </div>
+
+          {/* Main Heading */}
+          <h1 className="text-5xl md:text-7xl font-bold mb-8 leading-tight bg-gradient-to-r from-white via-gray-100 to-gray-300 bg-clip-text text-transparent">
+            AI-Powered Crypto
+            <br />
+            <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+              Trading Intelligence
+            </span>
+          </h1>
+          
+          {/* Subtitle */}
+          <p className="text-xl md:text-2xl text-gray-400 mb-12 max-w-4xl mx-auto leading-relaxed">
+            Advanced chart analysis, real-time signals, and professional trading insights powered by cutting-edge AI technology. 
+            Transform your crypto trading strategy with institutional-grade intelligence.
+          </p>
+
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+            <Button
+              onClick={() => login('demo@example.com', 'demo123')}
+              size="lg"
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg font-semibold rounded-lg shadow-2xl hover:shadow-blue-500/25 transition-all duration-300 group"
+            >
+              Start Free Trial
+              <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </Button>
+            
+            <Button
+              variant="outline"
+              size="lg"
+              className="border-gray-600 text-gray-300 hover:bg-gray-800/50 hover:border-gray-500 px-8 py-4 text-lg font-semibold rounded-lg backdrop-blur-sm transition-all duration-300 group"
+            >
+              <Play className="mr-2 w-5 h-5 group-hover:scale-110 transition-transform" />
+              Watch Demo
+            </Button>
+          </div>
+
+          {/* Trust Indicators */}
+          <div className="flex flex-wrap items-center justify-center gap-8 text-sm text-gray-500">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-green-400" />
+              <span>No credit card required</span>
             </div>
-            
-            {/* <h1 className="text-7xl md:text-8xl lg:text-9xl font-bold text-white mb-8 leading-tight">
-              <span className="bg-gradient-to-r from-purple-400 via-blue-400 to-green-400 bg-clip-text text-transparent">
-              CryptoBot Pro
-              </span>
-            </h1>
-            
-            <p className="text-5xl md:text-5xl lg:text-5xl text-muted-foreground max-w-5xl mx-auto leading-relaxed">
-              Advanced AI-powered cryptocurrency chart analysis with professional trading signals. 
-              Get instant insights from GPT-5 technology.
-            </p> */}
-            
-            {/* <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mt-12">
-              <Button 
-                onClick={() => login('demo@example.com', 'demo123')}
-                size="lg"
-                className="bg-gradient-to-r from-purple-500 to-blue-500 text-white border-0 hover:from-purple-600 hover:to-blue-600 transition-all duration-300 transform hover:scale-105 text-xl px-10 py-6"
-              >
-                Get Started Free
-                <ArrowRight className="w-6 h-6 ml-3" />
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                size="lg"
-                className="border-white/30 text-white hover:bg-white/10 transition-all duration-300 text-xl px-10 py-6"
-              >
-                Watch Demo
-              </Button>
-            </div> */}
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section ref={featuresRef} className="relative z-10 py-24 px-4">
-        <div className="container mx-auto">
-          <div className="text-center mb-20 animate-on-scroll">
-            <h2 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-8">
-              Powered by Advanced AI Technology
-            </h2>
-            <p className="text-2xl md:text-3xl text-muted-foreground max-w-4xl mx-auto">
-              Experience the future of crypto trading with our cutting-edge AI analysis platform
-            </p>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-green-400" />
+              <span>14-day free trial</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-green-400" />
+              <span>Cancel anytime</span>
+            </div>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
-            {/* Feature Card 1 */}
-            <Card className="feature-card bg-black/40 backdrop-blur-md border-white/20 hover:border-purple-500/50 transition-all duration-500 animate-on-scroll">
-              <CardHeader>
-                <div className="w-20 h-20 bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl flex items-center justify-center mb-6">
-                  <Brain className="w-10 h-10 text-white" />
-                </div>
-                <CardTitle className="text-3xl text-white">GPT-5 AI Analysis</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-lg text-muted-foreground leading-relaxed">
-                  Advanced AI technology analyzes your charts with human-like precision, 
-                  identifying patterns and trends you might miss.
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Feature Card 2 */}
-            <Card className="feature-card bg-black/40 backdrop-blur-md border-white/20 hover:border-blue-500/50 transition-all duration-500 animate-on-scroll">
-              <CardHeader>
-                <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-green-500 rounded-xl flex items-center justify-center mb-6">
-                  <Target className="w-10 h-10 text-white" />
-                </div>
-                <CardTitle className="text-3xl text-white">Trading Signals</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-lg text-muted-foreground leading-relaxed">
-                  Get precise entry/exit points, stop-loss levels, and risk management 
-                  recommendations for every trade.
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Feature Card 3 */}
-            <Card className="feature-card bg-black/40 backdrop-blur-md border-white/20 hover:border-green-500/50 transition-all duration-500 animate-on-scroll">
-              <CardHeader>
-                <div className="w-20 h-20 bg-gradient-to-r from-green-500 to-yellow-500 rounded-xl flex items-center justify-center mb-6">
-                  <BarChart3 className="w-10 h-10 text-white" />
-                </div>
-                <CardTitle className="text-3xl text-white">Technical Analysis</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-lg text-muted-foreground leading-relaxed">
-                  Comprehensive analysis including support/resistance levels, 
-                  volume analysis, and technical indicators.
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Feature Card 4 */}
-            <Card className="feature-card bg-black/40 backdrop-blur-md border-white/20 hover:border-pink-500/50 transition-all duration-500 animate-on-scroll">
-              <CardHeader>
-                <div className="w-20 h-20 bg-gradient-to-r from-pink-500 to-purple-500 rounded-xl flex items-center justify-center mb-6">
-                  <Shield className="w-10 h-10 text-white" />
-                </div>
-                <CardTitle className="text-3xl text-white">Risk Management</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-lg text-muted-foreground leading-relaxed">
-                  Advanced risk assessment and position sizing recommendations 
-                  to protect your capital and maximize returns.
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Feature Card 5 */}
-            <Card className="feature-card bg-black/40 backdrop-blur-md border-white/20 hover:border-orange-500/50 transition-all duration-500 animate-on-scroll">
-              <CardHeader>
-                <div className="w-20 h-20 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center mb-6">
-                  <TrendingUp className="w-10 h-10 text-white" />
-                </div>
-                <CardTitle className="text-3xl text-white">Market Insights</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-lg text-muted-foreground leading-relaxed">
-                  Deep market context analysis including market cycles, 
-                  institutional activity, and macro trends.
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Feature Card 6 */}
-            <Card className="feature-card bg-black/40 backdrop-blur-md border-white/20 hover:border-cyan-500/50 transition-all duration-500 animate-on-scroll">
-              <CardHeader>
-                <div className="w-20 h-20 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-xl flex items-center justify-center mb-6">
-                  <Zap className="w-10 h-10 text-white" />
-                </div>
-                <CardTitle className="text-3xl text-white">Lightning Fast</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-lg text-muted-foreground leading-relaxed">
-                  Get instant analysis results in seconds. No waiting, 
-                  no delays - just pure speed and accuracy.
-                </p>
-              </CardContent>
-            </Card>
+          {/* Scroll Indicator */}
+          <div className="mt-16 animate-bounce">
+            <ChevronDown className="w-6 h-6 text-gray-500 mx-auto" />
           </div>
         </div>
       </section>
 
       {/* Stats Section */}
-      <section ref={statsRef} className="relative z-10 py-24 px-4">
+      <section className="py-20 px-4 bg-gray-900/50">
         <div className="container mx-auto">
-          <div className="grid md:grid-cols-4 gap-10">
-            <div className="stat-item text-center animate-on-scroll">
-              <div className="w-20 h-20 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Star className="w-10 h-10 text-white" />
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              Trusted by Traders Worldwide
+            </h2>
+            <p className="text-gray-400 text-lg">
+              Join thousands of successful traders who rely on our AI-powered insights
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-4 gap-8">
+            <div className="text-center group">
+              <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
+                <BarChart3 className="w-10 h-10 text-white" />
               </div>
-              <div className="text-4xl md:text-5xl font-bold text-white mb-3">99.8%</div>
-              <div className="text-xl text-muted-foreground">Accuracy Rate</div>
+              <h3 className="text-4xl font-bold text-white mb-2">50,000+</h3>
+              <p className="text-gray-400 text-lg">Charts Analyzed Daily</p>
             </div>
 
-            <div className="stat-item text-center animate-on-scroll">
-              <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
+            <div className="text-center group">
+              <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
+                <Target className="w-10 h-10 text-white" />
+              </div>
+              <h3 className="text-4xl font-bold text-white mb-2">94.7%</h3>
+              <p className="text-gray-400 text-lg">Signal Accuracy</p>
+            </div>
+
+            <div className="text-center group">
+              <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
                 <Users className="w-10 h-10 text-white" />
               </div>
-              <div className="text-4xl md:text-5xl font-bold text-white mb-3">50K+</div>
-              <div className="text-xl text-muted-foreground">Active Traders</div>
+              <h3 className="text-4xl font-bold text-white mb-2">25,000+</h3>
+              <p className="text-gray-400 text-lg">Active Traders</p>
             </div>
 
-            <div className="stat-item text-center animate-on-scroll">
-              <div className="w-20 h-20 bg-gradient-to-r from-green-500 to-yellow-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Clock className="w-10 h-10 text-white" />
-              </div>
-              <div className="text-4xl md:text-5xl font-bold text-white mb-3">2.3s</div>
-              <div className="text-xl text-muted-foreground">Average Response</div>
-            </div>
-
-            <div className="stat-item text-center animate-on-scroll">
-              <div className="w-20 h-20 bg-gradient-to-r from-yellow-500 to-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+            <div className="text-center group">
+              <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
                 <TrendingUp className="w-10 h-10 text-white" />
               </div>
-              <div className="text-4xl md:text-5xl font-bold text-white mb-3">$2.1B</div>
-              <div className="text-xl text-muted-foreground">Trading Volume</div>
+              <h3 className="text-4xl font-bold text-white mb-2">$2.1B</h3>
+              <p className="text-gray-400 text-lg">Volume Analyzed</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section id="features" className="py-24 px-4 bg-gray-900">
+        <div className="container mx-auto">
+          <div className="text-center mb-20">
+            <h2 className="text-4xl md:text-6xl font-bold text-white mb-6">
+              Powerful Features for
+              <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent"> Smart Trading</span>
+            </h2>
+            <p className="text-xl text-gray-400 max-w-3xl mx-auto">
+              Everything you need to make informed trading decisions with institutional-grade AI analysis
+            </p>
+          </div>
+
+          <div className="grid lg:grid-cols-3 gap-8">
+            {/* Feature 1 */}
+            <div className="group bg-gray-800/50 border border-gray-700 rounded-2xl p-8 hover:border-blue-500/50 transition-all duration-300 hover:bg-gray-800/70">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <Brain className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-4">AI-Powered Analysis</h3>
+              <p className="text-gray-400 mb-6 leading-relaxed">
+                Advanced machine learning algorithms analyze market patterns, sentiment, and technical indicators to provide accurate trading signals.
+              </p>
+              <ul className="space-y-2 text-sm text-gray-300">
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-400" />
+                  <span>Pattern recognition</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-400" />
+                  <span>Sentiment analysis</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-400" />
+                  <span>Risk assessment</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Feature 2 */}
+            <div className="group bg-gray-800/50 border border-gray-700 rounded-2xl p-8 hover:border-green-500/50 transition-all duration-300 hover:bg-gray-800/70">
+              <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-blue-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <Zap className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-4">Real-Time Signals</h3>
+              <p className="text-gray-400 mb-6 leading-relaxed">
+                Get instant buy/sell signals with precise entry and exit points, stop-loss recommendations, and position sizing guidance.
+              </p>
+              <ul className="space-y-2 text-sm text-gray-300">
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-400" />
+                  <span>Instant notifications</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-400" />
+                  <span>Entry/exit points</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-400" />
+                  <span>Stop-loss guidance</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Feature 3 */}
+            <div className="group bg-gray-800/50 border border-gray-700 rounded-2xl p-8 hover:border-purple-500/50 transition-all duration-300 hover:bg-gray-800/70">
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <Shield className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-4">Risk Management</h3>
+              <p className="text-gray-400 mb-6 leading-relaxed">
+                Built-in risk assessment tools help you manage your portfolio with position sizing, diversification, and loss prevention strategies.
+              </p>
+              <ul className="space-y-2 text-sm text-gray-300">
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-400" />
+                  <span>Portfolio optimization</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-400" />
+                  <span>Position sizing</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-400" />
+                  <span>Diversification advice</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section id="how-it-works" className="py-24 px-4 bg-black">
+        <div className="container mx-auto">
+          <div className="text-center mb-20">
+            <h2 className="text-4xl md:text-6xl font-bold text-white mb-6">
+              How It Works
+            </h2>
+            <p className="text-xl text-gray-400 max-w-3xl mx-auto">
+              Get started in minutes with our simple, powerful trading intelligence platform
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-12">
+            {/* Step 1 */}
+            <div className="text-center group">
+              <div className="relative mb-8">
+                <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-300">
+                  <Database className="w-12 h-12 text-white" />
+                </div>
+                <div className="absolute -top-2 -right-2 w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                  1
+                </div>
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-4">Upload Your Chart</h3>
+              <p className="text-gray-400 leading-relaxed">
+                Simply upload a screenshot of your cryptocurrency chart or connect your trading account for real-time analysis.
+              </p>
+            </div>
+
+            {/* Step 2 */}
+            <div className="text-center group">
+              <div className="relative mb-8">
+                <div className="w-24 h-24 bg-gradient-to-br from-green-500 to-blue-600 rounded-full flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-300">
+                  <Cpu className="w-12 h-12 text-white" />
+                </div>
+                <div className="absolute -top-2 -right-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                  2
+                </div>
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-4">AI Analysis</h3>
+              <p className="text-gray-400 leading-relaxed">
+                Our advanced AI analyzes market patterns, technical indicators, and sentiment to generate comprehensive trading insights.
+              </p>
+            </div>
+
+            {/* Step 3 */}
+            <div className="text-center group">
+              <div className="relative mb-8">
+                <div className="w-24 h-24 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-300">
+                  <Target className="w-12 h-12 text-white" />
+                </div>
+                <div className="absolute -top-2 -right-2 w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                  3
+                </div>
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-4">Get Signals</h3>
+              <p className="text-gray-400 leading-relaxed">
+                Receive precise buy/sell signals with entry points, stop-loss levels, and profit targets to maximize your trading success.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section id="pricing" className="py-24 px-4 bg-gray-900">
+        <div className="container mx-auto">
+          <div className="text-center mb-20">
+            <h2 className="text-4xl md:text-6xl font-bold text-white mb-6">
+              Simple, Transparent Pricing
+            </h2>
+            <p className="text-xl text-gray-400 max-w-3xl mx-auto">
+              Choose the plan that fits your trading needs. All plans include our core AI analysis features.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            {/* Free Plan */}
+            <div className="bg-gray-800/50 border border-gray-700 rounded-2xl p-8 hover:border-gray-600 transition-all duration-300">
+              <div className="text-center mb-8">
+                <h3 className="text-2xl font-bold text-white mb-2">Free</h3>
+                <div className="text-4xl font-bold text-white mb-2">$0</div>
+                <p className="text-gray-400">Perfect for getting started</p>
+              </div>
+              <ul className="space-y-4 mb-8">
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-400" />
+                  <span className="text-gray-300">5 chart analyses per day</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-400" />
+                  <span className="text-gray-300">Basic AI signals</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-400" />
+                  <span className="text-gray-300">Email support</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-400" />
+                  <span className="text-gray-300">Community access</span>
+                </li>
+              </ul>
+              <Button
+                onClick={() => login('demo@example.com', 'demo123')}
+                className="w-full bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-lg transition-all duration-300"
+              >
+                Get Started Free
+              </Button>
+            </div>
+
+            {/* Pro Plan */}
+            <div className="bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl p-8 relative border-2 border-blue-500/50">
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                <div className="bg-blue-500 text-white px-4 py-1 rounded-full text-sm font-semibold">
+                  Most Popular
+                </div>
+              </div>
+              <div className="text-center mb-8">
+                <h3 className="text-2xl font-bold text-white mb-2">Pro</h3>
+                <div className="text-4xl font-bold text-white mb-2">$29</div>
+                <p className="text-blue-100">per month</p>
+              </div>
+              <ul className="space-y-4 mb-8">
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-400" />
+                  <span className="text-white">Unlimited chart analyses</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-400" />
+                  <span className="text-white">Advanced AI signals</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-400" />
+                  <span className="text-white">Real-time notifications</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-400" />
+                  <span className="text-white">Priority support</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-400" />
+                  <span className="text-white">Portfolio tracking</span>
+                </li>
+              </ul>
+              <Button
+                onClick={() => login('demo@example.com', 'demo123')}
+                className="w-full bg-white text-blue-600 hover:bg-gray-100 py-3 rounded-lg font-semibold transition-all duration-300"
+              >
+                Start Pro Trial
+              </Button>
+            </div>
+
+            {/* Enterprise Plan */}
+            <div className="bg-gray-800/50 border border-gray-700 rounded-2xl p-8 hover:border-gray-600 transition-all duration-300">
+              <div className="text-center mb-8">
+                <h3 className="text-2xl font-bold text-white mb-2">Enterprise</h3>
+                <div className="text-4xl font-bold text-white mb-2">$99</div>
+                <p className="text-gray-400">per month</p>
+              </div>
+              <ul className="space-y-4 mb-8">
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-400" />
+                  <span className="text-gray-300">Everything in Pro</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-400" />
+                  <span className="text-gray-300">Custom AI models</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-400" />
+                  <span className="text-gray-300">API access</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-400" />
+                  <span className="text-gray-300">Dedicated support</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-400" />
+                  <span className="text-gray-300">White-label options</span>
+                </li>
+              </ul>
+              <Button
+                variant="outline"
+                className="w-full border-gray-600 text-gray-300 hover:bg-gray-700 py-3 rounded-lg transition-all duration-300"
+              >
+                Contact Sales
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section id="testimonials" className="py-24 px-4 bg-black">
+        <div className="container mx-auto">
+          <div className="text-center mb-20">
+            <h2 className="text-4xl md:text-6xl font-bold text-white mb-6">
+              What Our Users Say
+            </h2>
+            <p className="text-xl text-gray-400 max-w-3xl mx-auto">
+              Join thousands of successful traders who trust SignalX for their trading decisions
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* Testimonial 1 */}
+            <div className="bg-gray-800/50 border border-gray-700 rounded-2xl p-8">
+              <div className="flex items-center mb-6">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+                  JS
+                </div>
+                <div className="ml-4">
+                  <h4 className="text-white font-semibold">John Smith</h4>
+                  <p className="text-gray-400 text-sm">Professional Trader</p>
+                </div>
+              </div>
+              <div className="flex mb-4">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
+                ))}
+              </div>
+              <p className="text-gray-300 leading-relaxed">
+                "SignalX has completely transformed my trading strategy. The AI analysis is incredibly accurate and has helped me increase my profits by 40% in just 3 months."
+              </p>
+            </div>
+
+            {/* Testimonial 2 */}
+            <div className="bg-gray-800/50 border border-gray-700 rounded-2xl p-8">
+              <div className="flex items-center mb-6">
+                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+                  MJ
+                </div>
+                <div className="ml-4">
+                  <h4 className="text-white font-semibold">Maria Johnson</h4>
+                  <p className="text-gray-400 text-sm">Crypto Investor</p>
+                </div>
+              </div>
+              <div className="flex mb-4">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
+                ))}
+              </div>
+              <p className="text-gray-300 leading-relaxed">
+                "The real-time signals are game-changing. I get instant notifications for the best entry and exit points, and the risk management features keep my portfolio safe."
+              </p>
+            </div>
+
+            {/* Testimonial 3 */}
+            <div className="bg-gray-800/50 border border-gray-700 rounded-2xl p-8">
+              <div className="flex items-center mb-6">
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white font-bold">
+                  DR
+                </div>
+                <div className="ml-4">
+                  <h4 className="text-white font-semibold">David Rodriguez</h4>
+                  <p className="text-gray-400 text-sm">Day Trader</p>
+                </div>
+              </div>
+              <div className="flex mb-4">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
+                ))}
+              </div>
+              <p className="text-gray-300 leading-relaxed">
+                "As a day trader, I need fast and accurate signals. SignalX delivers exactly that. The AI analysis is so precise that I've been able to reduce my losses significantly."
+              </p>
             </div>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section ref={ctaRef} className="relative z-10 py-24 px-4">
+      <section id="cta" className="py-24 px-4 bg-gradient-to-br from-gray-900 via-black to-gray-900">
         <div className="container mx-auto text-center">
-          <div className="max-w-5xl mx-auto animate-on-scroll">
-            <h2 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-8">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-4xl md:text-6xl font-bold text-white mb-8">
               Ready to Transform Your Trading?
             </h2>
-            <p className="text-2xl md:text-3xl text-muted-foreground mb-10 leading-relaxed">
-              Join thousands of successful traders who are already using CryptoBot Pro 
-              to make smarter, more profitable trading decisions.
-            </p>
             
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-              <Button 
+            <p className="text-xl text-gray-400 mb-12 leading-relaxed">
+              Join thousands of successful traders who are already using SignalX to make smarter, more profitable trading decisions. 
+              Start your free trial today and experience the power of AI-driven trading intelligence.
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-6 justify-center mb-12">
+              <Button
                 onClick={() => login('demo@example.com', 'demo123')}
                 size="lg"
-                className="bg-gradient-to-r from-purple-500 to-blue-500 text-white border-0 hover:from-purple-600 hover:to-blue-600 transition-all duration-300 transform hover:scale-105 text-xl px-12 py-6"
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-10 py-4 text-lg font-semibold rounded-lg shadow-2xl hover:shadow-blue-500/25 transition-all duration-300 group"
               >
                 Start Free Trial
-                <ArrowRight className="w-6 h-6 ml-3" />
+                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Button>
               
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="lg"
-                className="border-white/30 text-white hover:bg-white/10 transition-all duration-300 text-xl px-12 py-6"
+                className="border-gray-600 text-gray-300 hover:bg-gray-800/50 hover:border-gray-500 px-10 py-4 text-lg font-semibold rounded-lg backdrop-blur-sm transition-all duration-300 group"
               >
-                Learn More
+                <Play className="mr-2 w-5 h-5 group-hover:scale-110 transition-transform" />
+                Watch Demo
               </Button>
             </div>
 
-            <div className="mt-10 text-lg text-muted-foreground">
-              No credit card required • 14-day free trial • Cancel anytime
+            <div className="flex flex-wrap items-center justify-center gap-8 text-sm text-gray-500">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-400" />
+                <span>14-day free trial</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-400" />
+                <span>No credit card required</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-400" />
+                <span>Cancel anytime</span>
+              </div>
             </div>
           </div>
         </div>
       </section>
+
+      {/* Footer */}
+      <footer className="py-12 px-4 bg-black border-t border-gray-800">
+        <div className="container mx-auto">
+          <div className="grid md:grid-cols-4 gap-8">
+            <div>
+              <h3 className="text-xl font-bold text-white mb-4">SignalX</h3>
+              <p className="text-gray-400 mb-4">
+                AI-powered cryptocurrency trading intelligence for smart traders.
+              </p>
+              <div className="flex gap-4">
+                <Github className="w-6 h-6 text-gray-400 hover:text-white cursor-pointer transition-colors" />
+                <Twitter className="w-6 h-6 text-gray-400 hover:text-white cursor-pointer transition-colors" />
+                <Linkedin className="w-6 h-6 text-gray-400 hover:text-white cursor-pointer transition-colors" />
+              </div>
+            </div>
+            
+            <div>
+              <h4 className="text-white font-semibold mb-4">Product</h4>
+              <ul className="space-y-2 text-gray-400">
+                <li><a href="#" className="hover:text-white transition-colors">Features</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Pricing</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">API</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Documentation</a></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 className="text-white font-semibold mb-4">Company</h4>
+              <ul className="space-y-2 text-gray-400">
+                <li><a href="#" className="hover:text-white transition-colors">About</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 className="text-white font-semibold mb-4">Support</h4>
+              <ul className="space-y-2 text-gray-400">
+                <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Community</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Status</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Security</a></li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
+            <p>&copy; 2024 SignalX. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

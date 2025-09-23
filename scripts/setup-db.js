@@ -1,3 +1,24 @@
+/* eslint-disable no-console */
+require('dotenv').config();
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+
+async function main() {
+  const updated = await prisma.user.updateMany({
+    data: { credits: 3 }
+  });
+  console.log(`Updated ${updated.count} users to 3 credits`);
+}
+
+main()
+  .catch((e) => {
+    console.error('Database setup failed:', e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
+
 const { Client } = require('pg');
 require('dotenv').config({ path: '.env.local' });
 

@@ -2,10 +2,11 @@ import './globals.css';
 import type { Metadata } from 'next';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { Toaster } from '@/components/ui/toaster';
+import { SupportChat } from '@/components/SupportChat';
 
 export const metadata: Metadata = {
-  title: 'CryptoAI Pro - Advanced Trading Signals',
-  description: 'AI-powered cryptocurrency trading signals and analysis platform',
+  title: 'SignalX - AI Trading Platform',
+  description: 'Professional AI-powered cryptocurrency trading analysis platform',
 };
 
 export default function RootLayout({
@@ -15,9 +16,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className="font-sans">
+      <body className="font-sans bg-black text-white">
         <AuthProvider>
           {children}
+          <SupportChat />
           <Toaster />
         </AuthProvider>
       </body>

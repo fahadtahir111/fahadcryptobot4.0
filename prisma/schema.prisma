@@ -15,11 +15,17 @@ model User {
   email     String   @unique
   name      String?
   password  String
+  credits   Int      @default(3)
+  isAdmin   Boolean  @default(false)
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
   // Relations
   chartAnalyses ChartAnalysis[]
+  portfolios   Portfolio[]    @relation("UserPortfolio")
+  chatMessages ChatMessage[]
+  creditTransactions CreditTransaction[]
 }
 
 model ChartAnalysis {
@@ -29,6 +35,7 @@ model ChartAnalysis {
   timeframe String?
   imageUrl  String
   analysis  Json     // Store the full AI analysis response
+  creditsUsed Int    @default(1)
   createdAt DateTime @default(now())
   
   // Relations
@@ -46,7 +53,39 @@ model Portfolio {
   updatedAt DateTime @updatedAt
   
   // Relations
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation("UserPortfolio", fields: [userId], references: [id], onDelete: Cascade)
   
   @@unique([userId, symbol])
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  userId    String
+  message   String
+  isAdmin   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model CreditTransaction {
+  id          String   @id @default(cuid())
+  userId      String
+  amount      Int      // Positive for credits added, negative for credits used
+  type        String   // 'earned', 'purchased', 'used', 'admin_added', 'admin_removed'
+  description String?
+  createdAt   DateTime @default(now())
+  
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AdminActivity {
+  id          String   @id @default(cuid())
+  adminId     String
+  action      String   // 'user_created', 'user_updated', 'credits_modified', etc.
+  targetId    String?  // ID of the target user/entity
+  details     Json?    // Additional details about the action
+  createdAt   DateTime @default(now())
 }

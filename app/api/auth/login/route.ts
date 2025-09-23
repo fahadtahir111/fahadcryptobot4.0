@@ -42,19 +42,32 @@ export async function POST(request: NextRequest) {
     // Generate token
     const token = generateToken(user.id);
 
-    // Return user data and token
+    // Return user data and token (include credits and roles to show in navbar immediately)
     const userData = {
       id: user.id,
       email: user.email,
       name: user.name,
+      credits: user.credits,
+      isAdmin: user.isAdmin,
+      isActive: user.isActive,
       createdAt: user.createdAt,
-    };
+    } as const;
 
-    return NextResponse.json({
+    const res = NextResponse.json({
       message: 'Login successful',
       user: userData,
-      token,
     });
+
+    // Set HttpOnly auth cookie
+    res.cookies.set('auth', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7,
+    });
+
+    return res;
   } catch (error) {
     console.error('Login error:', error);
     return NextResponse.json(

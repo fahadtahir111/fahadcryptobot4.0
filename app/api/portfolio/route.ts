@@ -20,14 +20,11 @@ export async function GET(req: NextRequest) {
     });
 
     // Calculate total portfolio value
-    const totalValue = portfolio.reduce((sum, item) => sum + item.totalValue, 0);
-    const totalPnl = portfolio.reduce((sum, item) => sum + item.pnl, 0);
+    const totalValue = portfolio.reduce((sum, item) => sum + (item.amount * item.buyPrice), 0);
 
     return NextResponse.json({ 
       portfolio, 
-      totalValue, 
-      totalPnl,
-      totalPnlPercent: totalValue > 0 ? (totalPnl / (totalValue - totalPnl)) * 100 : 0
+      totalValue
     });
   } catch (error) {
     console.error('Error fetching portfolio:', error);
@@ -38,36 +35,31 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { symbol, quantity, avgPrice, currentPrice, userId } = body;
+    const { symbol, amount, buyPrice, notes, userId } = body;
 
-    if (!symbol || !quantity || !avgPrice || !currentPrice || !userId) {
+    if (!symbol || !amount || !buyPrice || !userId) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const totalValue = quantity * currentPrice;
-    const pnl = (currentPrice - avgPrice) * quantity;
-    const pnlPercent = (pnl / (avgPrice * quantity)) * 100;
-
     const portfolio = await prisma.portfolio.upsert({
-      where: { userId_symbol: { userId, symbol } },
+      where: { 
+        userId_symbol: { 
+          userId, 
+          symbol 
+        } 
+      },
       update: {
-        quantity: parseFloat(quantity),
-        avgPrice: parseFloat(avgPrice),
-        currentPrice: parseFloat(currentPrice),
-        totalValue,
-        pnl,
-        pnlPercent,
+        amount: parseFloat(amount),
+        buyPrice: parseFloat(buyPrice),
+        notes: notes || null,
         updatedAt: new Date(),
       },
       create: {
         userId,
         symbol,
-        quantity: parseFloat(quantity),
-        avgPrice: parseFloat(avgPrice),
-        currentPrice: parseFloat(currentPrice),
-        totalValue,
-        pnl,
-        pnlPercent,
+        amount: parseFloat(amount),
+        buyPrice: parseFloat(buyPrice),
+        notes: notes || null,
       },
     });
 

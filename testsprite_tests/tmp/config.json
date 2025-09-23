@@ -1,0 +1,15 @@
+{
+  "status": "commited",
+  "type": "frontend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:3000",
+  "executionArgs": {
+    "projectName": "fahadcryptobot4.0",
+    "projectPath": "D:\\fahadcryptobot4.0",
+    "testIds": [],
+    "additionalInstruction": "Focus on navbar credits rendering, dashboard avatar fallback, and Socket.IO handshake endpoint returns 200/handshake without 400 errors.",
+    "envs": {
+      "API_KEY": "sk-user-JDYlJsHrcy98CoPKBjF0AEDer4xRCLHOut9leERKBajyDYAn_Qs7jssXX62LApHS1wSrZycWtFoAAqsb_mdtrMw0TF9H7XViRsNFOW3gt7U3K69PFJGmxnCkXyYQDoZiMxk"
+    }
+  }
+}

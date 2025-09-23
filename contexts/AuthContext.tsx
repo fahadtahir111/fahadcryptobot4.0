@@ -7,6 +7,9 @@ interface User {
   email: string;
   name: string | null;
   avatar?: string;
+  credits: number;
+  isAdmin: boolean;
+  isActive: boolean;
   createdAt: string;
 }
 
@@ -16,6 +19,8 @@ interface AuthContextType {
   signup: (email: string, password: string, name?: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   loading: boolean;
+  updateCredits: (newCredits: number) => void;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -25,25 +30,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for stored token on mount
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      // Verify token and get user data
-      fetchUserData(token);
-    } else {
-      setLoading(false);
-    }
+    // Always try to load user from cookie-backed endpoint
+    fetchUserData();
   }, []);
 
-  const fetchUserData = async (token: string) => {
+  const fetchUserData = async () => {
     try {
-      // You could add a /api/auth/me endpoint to verify token and get user data
-      // For now, we'll just check if the token exists
-      setLoading(false);
+      const response = await fetch('/api/auth/me', { cache: 'no-store' });
+
+      if (response.ok) {
+        const userData = await response.json();
+        setUser({
+          id: userData.id,
+          email: userData.email,
+          name: userData.name ?? null,
+          avatar: userData.avatar ?? undefined,
+          credits: userData.credits ?? 0,
+          isAdmin: !!userData.isAdmin,
+          isActive: !!userData.isActive,
+          createdAt: String(userData.createdAt),
+        });
+      } else {
+        setUser(null);
+      }
     } catch (error) {
       console.error('Error fetching user data:', error);
-      localStorage.removeItem('authToken');
+      setUser(null);
+    } finally {
       setLoading(false);
+    }
+  };
+
+  const refreshUser = async () => {
+    await fetchUserData();
+  };
+
+  const updateCredits = (newCredits: number) => {
+    if (user) {
+      setUser({ ...user, credits: newCredits });
     }
   };
 
@@ -60,8 +84,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json();
 
       if (response.ok) {
-        localStorage.setItem('authToken', data.token);
-        setUser(data.user);
+        setUser({
+          id: data.user.id,
+          email: data.user.email,
+          name: data.user.name ?? null,
+          credits: data.user.credits ?? 0,
+          isAdmin: !!data.user.isAdmin,
+          isActive: !!data.user.isActive,
+          createdAt: String(data.user.createdAt),
+        });
         return { success: true };
       } else {
         return { success: false, error: data.error };
@@ -95,9 +126,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('authToken');
-    setUser(null);
+  const logout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } finally {
+      setUser(null);
+    }
   };
 
   const value = {
@@ -106,6 +140,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signup,
     logout,
     loading,
+    updateCredits,
+    refreshUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
