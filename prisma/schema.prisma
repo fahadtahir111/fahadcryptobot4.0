@@ -23,9 +23,6 @@ model User {
   
   // Relations
   chartAnalyses ChartAnalysis[]
-  portfolios   Portfolio[]    @relation("UserPortfolio")
-  chatMessages ChatMessage[]
-  creditTransactions CreditTransaction[]
 }
 
 model ChartAnalysis {
@@ -67,25 +64,4 @@ model ChatMessage {
   
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model CreditTransaction {
-  id          String   @id @default(cuid())
-  userId      String
-  amount      Int      // Positive for credits added, negative for credits used
-  type        String   // 'earned', 'purchased', 'used', 'admin_added', 'admin_removed'
-  description String?
-  createdAt   DateTime @default(now())
-  
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model AdminActivity {
-  id          String   @id @default(cuid())
-  adminId     String
-  action      String   // 'user_created', 'user_updated', 'credits_modified', etc.
-  targetId    String?  // ID of the target user/entity
-  details     Json?    // Additional details about the action
-  createdAt   DateTime @default(now())
 }
