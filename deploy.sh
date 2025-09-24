@@ -29,3 +29,4 @@ echo "1. Add environment variables in Vercel dashboard"
 echo "2. Test your deployment"
 echo "3. Set up custom domain (optional)"
 
+
