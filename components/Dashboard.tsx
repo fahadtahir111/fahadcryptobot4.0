@@ -24,7 +24,6 @@ import {
 } from 'lucide-react';
 import { ChartUpload } from './ChartUpload';
 import { AnalysisHistory } from './AnalysisHistory';
-import { Chat } from './Chat';
 import { useAuth } from '@/contexts/AuthContext';
 
 export function Dashboard() {
@@ -213,8 +212,7 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* Chat Component */}
-      <Chat />
+      {/* Chat removed */}
     </div>
   );
 }

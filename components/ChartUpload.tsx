@@ -22,9 +22,11 @@ import {
 import { ChartAnalysisResponse } from '@/lib/geminiService';
 import { validateImageFile, formatAnalysisData, getErrorMessage } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 export function ChartUpload() {
   const { user, updateCredits, refreshUser } = useAuth();
+  const { toast } = useToast();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -48,6 +50,7 @@ export function ChartUpload() {
       
       setSelectedFile(file);
       setError(null);
+      setAnalysis(null); // Clear any previous analysis
       
       // Create preview
       const reader = new FileReader();
@@ -70,6 +73,7 @@ export function ChartUpload() {
       
       setSelectedFile(file);
       setError(null);
+      setAnalysis(null); // Clear any previous analysis
       
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -125,6 +129,10 @@ export function ChartUpload() {
       const data = await response.json();
 
       if (!response.ok) {
+        // Show specific message for non-chart images
+        if (response.status === 400 && data?.error) {
+          throw new Error(String(data.error));
+        }
         throw new Error(data.error || data.details || 'Failed to analyze chart');
       }
 
@@ -144,6 +152,13 @@ export function ChartUpload() {
         window.dispatchEvent(new CustomEvent('analysis:created'));
       }
 
+      // Show success toast
+      toast({
+        title: "Analysis Complete",
+        description: "Chart analysis completed successfully!",
+        variant: "default",
+      });
+
       // Refresh user credits after successful analysis
       if (user) {
         // Show credit deduction animation
@@ -162,7 +177,35 @@ export function ChartUpload() {
     } catch (err) {
       const errorMessage = getErrorMessage(err);
       setError(errorMessage);
+      setAnalysis(null); // Clear any previous analysis
       console.error('Chart analysis error:', err);
+      
+      // Show toast notification for different error types
+      if (errorMessage.includes('Invalid image') || errorMessage.includes('trading chart')) {
+        toast({
+          title: "Invalid Image",
+          description: "Please upload a trading chart image (candlestick/line chart).",
+          variant: "destructive",
+        });
+      } else if (errorMessage.includes('Insufficient credits')) {
+        toast({
+          title: "Insufficient Credits",
+          description: "You need at least 1 credit to analyze charts.",
+          variant: "destructive",
+        });
+      } else if (errorMessage.includes('AI temporarily unavailable')) {
+        toast({
+          title: "AI Unavailable",
+          description: "AI service is temporarily unavailable. Please try again shortly.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Analysis Failed",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsAnalyzing(false);
     }
@@ -413,7 +456,7 @@ export function ChartUpload() {
       ) : (
         <div className="space-y-6">
           {/* Analysis Results */}
-          {analysis && (
+          {analysis && !error && (
             <div className="space-y-6">
               {/* Safety check for required properties */}
               {!analysis.symbol || !analysis.pattern ? (

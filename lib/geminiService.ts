@@ -106,21 +106,39 @@ export class GeminiService {
 
         const analysisText = await this.withRetry(execCall, this.maxRetries);
         console.log(`✅ Successfully used SignalX AI (${this.modelName})`);
-        const parsedResponse = this.parseAnalysisResponse(analysisText, request);
-        return formatAnalysisData(parsedResponse);
+        
+        try {
+          const parsedResponse = this.parseAnalysisResponse(analysisText, request);
+          return formatAnalysisData(parsedResponse);
+        } catch (parseError) {
+          // Re-throw NOT_CHART errors immediately
+          if (parseError instanceof Error && parseError.message.startsWith('NOT_CHART:')) {
+            throw parseError;
+          }
+          // For other parsing errors, fall through to outer catch
+          throw parseError;
+        }
       } finally {
         this.releaseSlot();
       }
     } catch (error) {
       console.error('Gemini 2.5 Flash analysis error:', error);
+      
+      // Re-throw NOT_CHART errors instead of returning mock data
+      if (error instanceof Error && error.message.startsWith('NOT_CHART:')) {
+        throw error;
+      }
+      
       return this.getMockAnalysis(request);
     }
   }
 
   private buildAnalysisPrompt(request: ChartAnalysisRequest): string {
-    return `You are a senior crypto technical analyst with 10+ years of experience. Analyze the provided chart image and return ONLY valid JSON with comprehensive technical analysis.
+    return `You are a senior crypto technical analyst with 10+ years of experience. First determine if the provided IMAGE is a TRADING CHART (candlesticks/lines, axes, indicators, exchange UI). Return ONLY valid JSON.
 
 {
+  "isChart": true,
+  "notChartReason": "",
   "symbol": "BTC/USDT",
   "pattern": "Specific chart pattern identified (e.g., Bullish Consolidation, Ascending Triangle, Bullish Flag)",
   "trend": "bullish|bearish|neutral",
@@ -170,6 +188,7 @@ export class GeminiService {
 
 IMPORTANT RULES:
 - Output ONLY valid JSON (no markdown fences, no commentary, no extra text)
+- If the image is NOT a trading chart, set "isChart": false and provide a short "notChartReason". In that case, you may leave other fields default or empty.
 - Always provide specific price levels (never null or "N/A")
 - Use actual numbers for prices, not strings with $ symbols
 - Ensure all arrays have content, never empty arrays
@@ -194,6 +213,10 @@ Timeframe: ${request.timeframe || 'Unknown'}`;
         const parsed = JSON.parse(jsonMatch[0]);
 
         // Ensure all required fields have valid values
+        if (parsed.isChart === false) {
+          throw new Error('NOT_CHART: ' + (parsed.notChartReason || 'The provided image is not a trading chart'));
+        }
+
         const symbol = parsed.symbol || request.symbol || 'BTC/USDT';
         const pattern = parsed.pattern || 'Bullish Consolidation';
         const trend = parsed.trend || 'bullish';

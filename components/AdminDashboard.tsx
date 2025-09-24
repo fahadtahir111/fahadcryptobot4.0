@@ -21,7 +21,7 @@ import {
   Send,
   Menu,
   X,
-  MessageCircle,
+  // MessageCircle,
   BarChart3,
   Settings,
   Home,
@@ -90,16 +90,16 @@ export function AdminDashboard() {
     isActive: true
   });
   const [socket, setSocket] = useState<Socket | null>(null);
-  const [supportMessages, setSupportMessages] = useState<Array<{
-    id: string;
-    userId: string;
-    message: string;
-    isAdmin: boolean;
-    createdAt: string;
-    user?: { name?: string | null; email?: string };
-  }>>([]);
-  const [supportSearch, setSupportSearch] = useState('');
-  const [activeSupportUserId, setActiveSupportUserId] = useState<string | null>(null);
+  // const [supportMessages, setSupportMessages] = useState<Array<{
+  //   id: string;
+  //   userId: string;
+  //   message: string;
+  //   isAdmin: boolean;
+  //   createdAt: string;
+  //   user?: { name?: string | null; email?: string };
+  // }>>([]);
+  // const [supportSearch, setSupportSearch] = useState('');
+  // const [activeSupportUserId, setActiveSupportUserId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
 
@@ -107,7 +107,7 @@ export function AdminDashboard() {
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'users', label: 'Users', icon: Users },
     { id: 'credits', label: 'Credits', icon: CreditCard },
-    { id: 'support', label: 'Support', icon: MessageCircle },
+    // { id: 'support', label: 'Support', icon: MessageCircle },
     { id: 'transactions', label: 'Transactions', icon: Activity },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
   ];
@@ -116,17 +116,7 @@ export function AdminDashboard() {
     if (user?.isAdmin) {
       fetchData();
       // load persisted support messages page 1
-      (async () => {
-        try {
-          const res = await fetch('/api/admin/support');
-          if (res.ok) {
-            const data = await res.json();
-            if (Array.isArray(data.messages)) setSupportMessages(data.messages);
-          }
-        } catch (e) {
-          console.error('Failed to load support messages', e);
-        }
-      })();
+      // Support messages disabled
       const s = io({ path: '/api/socketio' });
       setSocket(s);
       s.on('admin:user-updated', (u: any) => {
@@ -138,30 +128,12 @@ export function AdminDashboard() {
           return next;
         });
       });
-      s.on('support-message', (payload: any) => {
-        setSupportMessages(prev => [payload, ...prev].slice(0, 200));
-        // Optionally refresh lists
-        fetchData();
-      });
+      // Support socket disabled
       return () => { s.disconnect(); };
     }
   }, [user]);
 
-  const sendSupportReply = (targetUserId: string, text: string) => {
-    if (!socket) return;
-    const message = (text || '').trim();
-    if (!message) return;
-    const msg = {
-      id: Date.now().toString(),
-      userId: targetUserId,
-      message,
-      isAdmin: true,
-      createdAt: new Date().toISOString(),
-      user: { name: user?.name || 'Admin', email: user?.email || '' }
-    };
-    socket.emit('support-message', msg);
-    setSupportMessages(prev => [msg, ...prev]);
-  };
+  // const sendSupportReply = (targetUserId: string, text: string) => {};
 
   const fetchData = async () => {
     try {
@@ -681,104 +653,8 @@ export function AdminDashboard() {
 
       case 'support':
         return (
-          <div className="space-y-8">
-            <div>
-              <h1 className="text-4xl font-bold text-white mb-4 professional-heading">
-                Chat Support Management
-              </h1>
-              <p className="text-gray-400 professional-text">
-                Manage support messages and respond to user inquiries
-              </p>
-            </div>
-
-            <Card className="clean-card">
-              <CardHeader>
-                <CardTitle className="text-2xl text-white professional-heading">
-                  Support Messages
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="text-sm text-gray-400">
-                        Total Support Messages: {supportMessages.length}
-                      </div>
-                      <div className="text-sm text-gray-400">
-                        Unread Messages: {supportMessages.filter(m => !m.isAdmin).length}
-                      </div>
-                    </div>
-                    <div className="relative">
-                      <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                      <Input
-                        placeholder="Search support messages..."
-                        value={supportSearch}
-                        onChange={(e) => setSupportSearch(e.target.value)}
-                        className="pl-10 bg-white/5 border-white/20 text-white placeholder:text-white/40"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-3 max-h-96 overflow-y-auto">
-                    {supportMessages
-                      .filter(msg => 
-                        supportSearch === '' || 
-                        msg.message.toLowerCase().includes(supportSearch.toLowerCase()) ||
-                        msg.user?.email?.toLowerCase().includes(supportSearch.toLowerCase()) ||
-                        msg.user?.name?.toLowerCase().includes(supportSearch.toLowerCase())
-                      )
-                      .map((message) => (
-                        <div key={message.id} className="p-4 bg-white/5 rounded-lg border border-white/10">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-2 mb-2">
-                                <span className="text-sm font-medium text-white">
-                                  {message.user?.name || message.user?.email || message.userId}
-                                </span>
-                                <Badge variant={message.isAdmin ? 'secondary' : 'default'}>
-                                  {message.isAdmin ? 'Admin' : 'User'}
-                                </Badge>
-                                <span className="text-xs text-gray-400">
-                                  {new Date(message.createdAt).toLocaleString()}
-                                </span>
-                              </div>
-                              <p className="text-sm text-gray-300 mb-3">{message.message}</p>
-                              
-                              {!message.isAdmin && (
-                                <div className="flex items-center space-x-2">
-                                  <Input
-                                    placeholder="Reply to this message..."
-                                    className="flex-1 bg-white/5 border-white/20 text-white placeholder:text-white/40"
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter') {
-                                        const target = e.target as HTMLInputElement;
-                                        sendSupportReply(message.userId, target.value);
-                                        target.value = '';
-                                      }
-                                    }}
-                                  />
-                                  <Button
-                                    onClick={(e) => {
-                                      const input = (e.currentTarget.previousSibling as HTMLInputElement);
-                                      sendSupportReply(message.userId, input?.value || '');
-                                      if (input) input.value = '';
-                                    }}
-                                    className="professional-button"
-                                    size="sm"
-                                  >
-                                    <Send className="w-4 h-4" />
-                                  </Button>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          // Support tab disabled
+          <div />
         );
 
       case 'transactions':
