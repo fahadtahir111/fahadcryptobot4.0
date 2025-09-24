@@ -19,7 +19,8 @@ function getAdminIdFromRequest(req: NextRequest): string | null {
   const token = bearer || cookieToken || null;
   if (!token) return null;
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as any;
+    const secret = (process.env.JWT_SECRET || 'your-secret-key') as string;
+    const decoded = jwt.verify(String(token || ''), secret) as any;
     return decoded?.userId || null;
   } catch {
     return null;

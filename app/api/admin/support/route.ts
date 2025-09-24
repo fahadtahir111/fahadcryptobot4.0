@@ -14,7 +14,8 @@ export async function GET(req: NextRequest) {
     const bearer = authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : null;
     const token = bearer || cookieToken;
     if (!token) return NextResponse.json({ error: 'No token provided' }, { status: 401 });
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as any;
+    const secret = (process.env.JWT_SECRET || 'your-secret-key') as string;
+    const decoded = jwt.verify(String(token || ''), secret) as any;
 
     const me = await prisma.user.findUnique({ where: { id: decoded.userId }, select: { isAdmin: true } });
     if (!me?.isAdmin) return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
@@ -60,7 +61,8 @@ export async function POST(req: NextRequest) {
     const bearer = authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : null;
     const token = bearer || cookieToken;
     if (!token) return NextResponse.json({ error: 'No token provided' }, { status: 401 });
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as any;
+    const secret = (process.env.JWT_SECRET || 'your-secret-key') as string;
+    const decoded = jwt.verify(String(token || ''), secret) as any;
 
     const me = await prisma.user.findUnique({ where: { id: decoded.userId }, select: { isAdmin: true } });
     if (!me?.isAdmin) return NextResponse.json({ error: 'Admin access required' }, { status: 403 });

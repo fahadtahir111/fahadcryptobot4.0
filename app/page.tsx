@@ -12,7 +12,7 @@ import { Suspense } from 'react';
 function HomeContent() {
   const { user, loading } = useAuth();
   const searchParams = useSearchParams();
-  const isAdmin = searchParams.get('admin') === 'true';
+  const isAdmin = (searchParams?.get?.('admin') ?? '') === 'true';
 
   if (loading) {
     return (

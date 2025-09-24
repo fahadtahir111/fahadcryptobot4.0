@@ -12,7 +12,8 @@ export async function POST(req: NextRequest) {
     }
 
     const token = authHeader.substring(7);
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as any;
+    const secret = (process.env.JWT_SECRET || 'your-secret-key') as string;
+    const decoded = jwt.verify(String(token || ''), secret) as any;
 
     // Check if user is admin
     const adminUser = await prisma.user.findUnique({

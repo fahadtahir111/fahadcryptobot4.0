@@ -10,7 +10,8 @@ export async function GET(
 ) {
   try {
     const token = req.cookies.get('auth')?.value || '';
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as any;
+    const secret = (process.env.JWT_SECRET || 'your-secret-key') as string;
+    const decoded = jwt.verify(String(token || ''), secret) as any;
     const { id } = await params;
 
     const analysis = await prisma.chartAnalysis.findFirst({
@@ -47,7 +48,8 @@ export async function DELETE(
 ) {
   try {
     const token = req.cookies.get('auth')?.value || '';
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as any;
+    const secret = (process.env.JWT_SECRET || 'your-secret-key') as string;
+    const decoded = jwt.verify(String(token || ''), secret) as any;
     const { id } = await params;
 
     // Check if analysis belongs to user

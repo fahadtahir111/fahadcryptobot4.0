@@ -8,7 +8,7 @@ function debounce(func: Function, wait: number) {
   let timeout: NodeJS.Timeout;
   return function (...args: any[]) {
     clearTimeout(timeout);
-    timeout = setTimeout(() => func.apply(this, args), wait);
+    timeout = setTimeout(() => func.apply(undefined, args), wait);
   };
 }
 
@@ -336,8 +336,8 @@ class App {
   camera: any;
   scene: any;
   planeGeometry: any;
-  mediasImages: any[];
-  medias: any[];
+  mediasImages: any[] = [];
+  medias: any[] = [];
   screen: any;
   viewport: any;
   isDown: boolean = false;

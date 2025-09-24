@@ -46,7 +46,7 @@ const ScrambledText = ({
       type: 'chars',
       charsClass: 'char'
     });
-    charsRef.current = split.chars;
+    charsRef.current = (split.chars as Element[]).map(el => el as HTMLElement);
 
     charsRef.current.forEach(c => {
       gsap.set(c, {

@@ -22,11 +22,12 @@ export async function POST(req: NextRequest) {
     }
 
     // Get user from token
-    let userId = null;
+    let userId: string | null = null;
     const cookieToken = req.cookies.get('auth')?.value;
     if (cookieToken) {
       try {
-        const decoded = jwt.verify(cookieToken, process.env.JWT_SECRET || 'your-secret-key') as any;
+        const secret = (process.env.JWT_SECRET || 'your-secret-key') as string;
+        const decoded = jwt.verify(String(cookieToken || ''), secret) as any;
         userId = decoded.userId;
       } catch (error) {
         console.error('Token verification failed:', error);
@@ -118,7 +119,7 @@ export async function POST(req: NextRequest) {
         if (userId) {
           await prisma.chartAnalysis.create({
             data: {
-              userId,
+              userId: userId as string,
               symbol: symbol || 'Unknown',
               timeframe: timeframe || 'Unknown',
               imageUrl: savedImageUrl,
@@ -129,7 +130,7 @@ export async function POST(req: NextRequest) {
 
           // Deduct credits
           await prisma.user.update({
-            where: { id: userId },
+            where: { id: userId as string },
             data: { 
               credits: { 
                 decrement: 1 
@@ -140,7 +141,7 @@ export async function POST(req: NextRequest) {
           // Record credit transaction
           await prisma.creditTransaction.create({
             data: {
-              userId,
+              userId: userId as string,
               amount: -1,
               type: 'used',
               description: 'Chart analysis'
@@ -230,14 +231,14 @@ export async function POST(req: NextRequest) {
     if (userId) {
       await prisma.$transaction(async (tx) => {
         // Ensure the user still has credits inside the transaction
-        const u = await tx.user.findUnique({ where: { id: userId }, select: { credits: true } });
+        const u = await tx.user.findUnique({ where: { id: userId as string }, select: { credits: true } });
         if (!u || u.credits < 1) {
           throw new Error('Insufficient credits');
         }
 
         await tx.chartAnalysis.create({
           data: {
-            userId,
+            userId: userId as string,
             symbol: symbol || 'Unknown',
             timeframe: timeframe || 'Unknown',
             imageUrl: savedImageUrl,
@@ -247,13 +248,13 @@ export async function POST(req: NextRequest) {
         });
 
         await tx.user.update({
-          where: { id: userId },
+          where: { id: userId as string },
           data: { credits: { decrement: 1 } },
         });
 
         await tx.creditTransaction.create({
           data: {
-            userId,
+            userId: userId as string,
             amount: -1,
             type: 'used',
             description: 'Chart analysis',

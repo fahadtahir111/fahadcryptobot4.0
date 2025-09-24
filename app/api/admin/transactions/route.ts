@@ -15,7 +15,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'No token provided' }, { status: 401 });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as any;
+    const secret = (process.env.JWT_SECRET || 'your-secret-key') as string;
+    const decoded = jwt.verify(String(token || ''), secret) as any;
 
     // Check if user is admin
     const adminUser = await prisma.user.findUnique({

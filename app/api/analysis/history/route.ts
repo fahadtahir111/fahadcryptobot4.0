@@ -7,7 +7,8 @@ const prisma = new PrismaClient();
 export async function GET(req: NextRequest) {
   try {
     const token = req.cookies.get('auth')?.value;
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as any;
+    const secret = (process.env.JWT_SECRET || 'your-secret-key') as string;
+    const decoded = jwt.verify(String(token || ''), secret) as any;
 
     const history = await prisma.chartAnalysis.findMany({
       where: { userId: decoded.userId },
