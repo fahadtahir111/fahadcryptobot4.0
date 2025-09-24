@@ -1,4 +1,4 @@
-# CURSOR - AI Trading Platform
+# Signal X - AI Trading Platform
 
 A professional AI-powered cryptocurrency trading analysis platform powered by Gemini 2.0 Flash.
 
