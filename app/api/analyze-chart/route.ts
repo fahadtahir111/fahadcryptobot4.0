@@ -2,9 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { geminiService } from '@/lib/geminiService';
 import { PrismaClient, Prisma } from '@prisma/client';
 import jwt from 'jsonwebtoken';
-import { promises as fs } from 'fs';
-import path from 'path';
-import { randomUUID } from 'crypto';
 
 const prisma = new PrismaClient();
 
@@ -53,23 +50,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Save image to disk (public/uploads) and get URL
-    let savedImageUrl = 'mock-image-url';
-    try {
-      const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-      await fs.mkdir(uploadsDir, { recursive: true });
-      const extension = (fileType && typeof fileType === 'string' && fileType.includes('/'))
-        ? fileType.split('/')[1]
-        : 'png';
-      const filename = `${randomUUID()}.${extension}`;
-      const filePath = path.join(uploadsDir, filename);
-      const buffer = Buffer.from(imageBase64, 'base64');
-      const bytes = new Uint8Array(buffer);
-      await fs.writeFile(filePath, bytes);
-      savedImageUrl = `/uploads/${filename}`;
-    } catch (e) {
-      console.error('Failed to persist uploaded image, continuing with analysis:', e);
-    }
+    // For Vercel: Store image as base64 data URL (works in serverless environment)
+    const savedImageUrl = `data:${fileType || 'image/png'};base64,${imageBase64}`;
 
     // Check if API key is configured
     const apiKey = process.env.GEMINI_API_KEY;
