@@ -2,9 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/database';
 import { hashPassword } from '@/lib/auth';
 
-// Configure for static export
-export const dynamic = 'force-static';
-export const revalidate = false;
+// Configure for dynamic API routes
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {

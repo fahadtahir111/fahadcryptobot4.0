@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,10 +14,12 @@ import { X, Eye, EyeOff, Brain, TrendingUp } from 'lucide-react';
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialMode?: 'login' | 'signup';
 }
 
-export function AuthModal({ isOpen, onClose }: AuthModalProps) {
-  const [mode, setMode] = useState<'login' | 'signup'>('login');
+export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) {
+  const [mode, setMode] = useState<'login' | 'signup'>(initialMode);
+  const [mounted, setMounted] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -27,7 +30,16 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
   const { login, signup } = useAuth();
 
-  if (!isOpen) return null;
+  useEffect(() => setMounted(true), []);
+
+  // When modal opens or initialMode changes, sync mode once
+  useEffect(() => {
+    if (isOpen) {
+      setMode(initialMode);
+    }
+  }, [isOpen, initialMode]);
+
+  if (!isOpen || !mounted) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,8 +94,8 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     resetForm();
   };
 
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  return createPortal(
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
       <div className="relative w-full max-w-md">
         <Card className="trading-card border-0 shadow-2xl">
           <CardHeader className="relative">
@@ -262,6 +274,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

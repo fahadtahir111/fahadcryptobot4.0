@@ -98,20 +98,29 @@ export function AnalysisHistory() {
     }
   };
 
+  const getDisplaySymbol = (item: AnalysisHistoryItem) => {
+    const raw = (item.symbol && item.symbol !== 'Unknown')
+      ? item.symbol
+      : (item.analysis?.symbol || 'Unknown');
+    if (!raw || raw === 'Unknown') return 'Unknown';
+    const base = String(raw).split('/')[0]?.trim();
+    return base || String(raw);
+  };
+
   if (loading) {
     return (
       <Card className="clean-card">
         <CardHeader>
-          <CardTitle className="flex items-center text-2xl text-white professional-heading">
-            <div className="w-8 h-8 mr-4 bg-white rounded-lg flex items-center justify-center">
-              <BarChart3 className="w-5 h-5 text-black" />
+          <CardTitle className="flex items-center gap-3 text-xl sm:text-2xl text-white professional-heading">
+            <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+              <BarChart3 className="w-5 h-5 text-black" aria-hidden="true" />
             </div>
-            Analysis History
+            <span>Analysis History</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto" />
             <p className="text-gray-400 mt-4">Loading history...</p>
           </div>
         </CardContent>
@@ -122,11 +131,11 @@ export function AnalysisHistory() {
   return (
     <Card className="clean-card">
       <CardHeader>
-        <CardTitle className="flex items-center text-2xl text-white professional-heading">
-          <div className="w-8 h-8 mr-4 bg-white rounded-lg flex items-center justify-center">
-            <BarChart3 className="w-5 h-5 text-black" />
+        <CardTitle className="flex items-center gap-3 text-xl sm:text-2xl text-white professional-heading">
+          <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+            <BarChart3 className="w-5 h-5 text-black" aria-hidden="true" />
           </div>
-          Analysis History
+          <span>Analysis History</span>
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -139,16 +148,20 @@ export function AnalysisHistory() {
 
         {history.length === 0 ? (
           <div className="text-center py-8 text-gray-400 professional-text">
-            <BarChart3 className="w-12 h-12 mx-auto mb-4 opacity-50" />
+            <BarChart3 className="w-12 h-12 mx-auto mb-4 opacity-50" aria-hidden="true" />
             <p>No analysis history found</p>
             <p className="text-sm">Your chart analyses will appear here</p>
           </div>
         ) : (
           <div className="space-y-4">
             {history.map((item) => (
-              <a href={`/analysis/${item.id}`} key={item.id} className="block p-4 bg-white/5 rounded-lg border border-white/10 hover:border-white/20 transition-all duration-300 hover-lift">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center space-x-3">
+              <a
+                href={`/analysis/${item.id}`}
+                key={item.id}
+                className="block p-4 sm:p-5 bg-white/5 rounded-lg border border-white/10 hover:border-white/20 transition-all duration-300 hover-lift"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+                  <div className="flex items-center gap-3 flex-wrap">
                     {item.imageUrl && (
                       <img
                         src={item.imageUrl}
@@ -157,49 +170,46 @@ export function AnalysisHistory() {
                       />
                     )}
                     <div className="flex items-center space-x-2">
-                      <TrendingUp className="w-4 h-4 text-blue-400" />
-                      <span className="font-medium text-white">{item.symbol}</span>
+                      <TrendingUp className="w-4 h-4 text-blue-400" aria-hidden="true" />
+                      <span className="font-medium text-white text-sm sm:text-base">{getDisplaySymbol(item)}</span>
                     </div>
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="outline" className="text-[10px] sm:text-xs">
                       {item.timeframe}
                     </Badge>
-                    <Badge variant="secondary" className="text-xs">
+                    <Badge variant="secondary" className="text-[10px] sm:text-xs">
                       {item.creditsUsed} credit{item.creditsUsed > 1 ? 's' : ''}
                     </Badge>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center justify-end">
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={(e) => { e.preventDefault(); deleteAnalysis(item.id); }}
                       className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                      aria-label="Delete analysis"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4" aria-hidden="true" />
                     </Button>
                   </div>
                 </div>
 
-                <div className="grid md:grid-cols-3 gap-4 mb-3">
-                  <div className="flex items-center space-x-2 text-sm text-gray-400">
-                    <Calendar className="w-4 h-4" />
-                    <span>{formatDate(item.createdAt)}</span>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 mb-3">
+                  <div className="flex items-center space-x-2 text-xs sm:text-sm text-gray-400">
+                    <Calendar className="w-4 h-4" aria-hidden="true" />
+                    <span className="truncate">{formatDate(item.createdAt)}</span>
                   </div>
-                  <div className="flex items-center space-x-2 text-sm">
+                  <div className="flex items-center space-x-2 text-xs sm:text-sm">
                     <span className="text-gray-400">Pattern:</span>
-                    <span className="text-white">{item.analysis.pattern || 'Unknown'}</span>
+                    <span className="text-white truncate">{item.analysis.pattern || 'Unknown'}</span>
                   </div>
-                  <div className="flex items-center space-x-2 text-sm">
+                  <div className="flex items-center space-x-2 text-xs sm:text-sm">
                     <span className="text-gray-400">Trend:</span>
-                    <span className={getTrendColor(item.analysis.trend)}>
-                      {item.analysis.trend || 'Unknown'}
-                    </span>
+                    <span className={getTrendColor(item.analysis.trend)}>{item.analysis.trend || 'Unknown'}</span>
                   </div>
                 </div>
 
-                <div className="text-sm text-gray-400">
-                  <p className="line-clamp-2">
-                    {item.analysis.analysis || 'No analysis details available'}
-                  </p>
+                <div className="text-xs sm:text-sm text-gray-400">
+                  <p className="line-clamp-2">{item.analysis.analysis || 'No analysis details available'}</p>
                 </div>
               </a>
             ))}

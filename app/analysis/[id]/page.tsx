@@ -123,17 +123,17 @@ export default function AnalysisDetailPage() {
 								<CardTitle className="text-lg">Price Levels</CardTitle>
 							</CardHeader>
 							<CardContent className="space-y-3">
-								<div className="flex justify-between">
-									<span className="font-medium">Entry Price:</span>
-									<span className="text-green-400 font-semibold">${String(a.entryPrice || 'N/A')}</span>
-								</div>
+                                <div className="flex justify-between">
+                                    <span className="font-medium">Entry Price:</span>
+                                    <span className="text-green-400 font-semibold">{String(a.entryPrice || 'N/A')}</span>
+                                </div>
 								<div className="flex justify-between">
 									<span className="font-medium">Target Price:</span>
-									<span className="text-blue-400 font-semibold">${String(a.targetPrice || 'N/A')}</span>
+                                    <span className="text-blue-400 font-semibold">{String(a.targetPrice || 'N/A')}</span>
 								</div>
 								<div className="flex justify-between">
 									<span className="font-medium">Stop Loss:</span>
-									<span className="text-red-400 font-semibold">${String(a.stopLoss || 'N/A')}</span>
+                                    <span className="text-red-400 font-semibold">{String(a.stopLoss || 'N/A')}</span>
 								</div>
 								<div className="flex justify-between">
 									<span className="font-medium">Risk/Reward:</span>
