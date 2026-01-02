@@ -7,17 +7,20 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { 
-  Upload, 
-  Image, 
-  Brain, 
-  Target, 
-  TrendingUp, 
+import {
+  Upload,
+  Image,
+  Brain,
+  Target,
+  TrendingUp,
   TrendingDown,
   AlertTriangle as TriangleAlert,
   CheckCircle,
   Loader2,
-  Settings
+  Settings,
+  Zap,
+  ShieldCheck,
+  AlertCircle
 } from 'lucide-react';
 import { ChartAnalysisResponse } from '@/lib/geminiService';
 import { validateImageFile, formatAnalysisData, getErrorMessage } from '@/lib/utils';
@@ -31,6 +34,7 @@ export function ChartUpload() {
   const [preview, setPreview] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<ChartAnalysisResponse | null>(null);
+  const [marketData, setMarketData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [symbol, setSymbol] = useState('');
@@ -47,11 +51,11 @@ export function ChartUpload() {
         setError(validation.error!);
         return;
       }
-      
+
       setSelectedFile(file);
       setError(null);
       setAnalysis(null); // Clear any previous analysis
-      
+
       // Create preview
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -70,11 +74,11 @@ export function ChartUpload() {
         setError(validation.error!);
         return;
       }
-      
+
       setSelectedFile(file);
       setError(null);
       setAnalysis(null); // Clear any previous analysis
-      
+
       const reader = new FileReader();
       reader.onload = (e) => {
         setPreview(e.target?.result as string);
@@ -102,7 +106,7 @@ export function ChartUpload() {
     try {
       // Convert image to base64
       const base64 = await fileToBase64(selectedFile);
-      
+
       // Call Gemini 2.5 Flash API
       const response = await fetch('/api/analyze-chart', {
         method: 'POST',
@@ -147,6 +151,7 @@ export function ChartUpload() {
       console.log('Sanitized analysis data:', sanitizedAnalysis);
 
       setAnalysis(sanitizedAnalysis);
+      setMarketData(data.marketData);
       // Notify other components (e.g., history) to refresh
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('analysis:created'));
@@ -164,10 +169,10 @@ export function ChartUpload() {
         // Show credit deduction animation
         setShowCreditDeduction(true);
         updateCredits(user.credits - 1);
-        
+
         // Hide animation after 2 seconds
         setTimeout(() => setShowCreditDeduction(false), 2000);
-        
+
         await refreshUser();
         // notify navbar to refresh credits immediately
         if (typeof window !== 'undefined') {
@@ -179,7 +184,7 @@ export function ChartUpload() {
       setError(errorMessage);
       setAnalysis(null); // Clear any previous analysis
       console.error('Chart analysis error:', err);
-      
+
       // Show toast notification for different error types
       if (errorMessage.includes('Invalid image') || errorMessage.includes('trading chart')) {
         toast({
@@ -276,19 +281,19 @@ export function ChartUpload() {
     <div className="space-y-6">
       <div className="text-center animate-fade-in-up">
         <h2 className="text-3xl font-bold mb-2 professional-heading">Chart Analysis</h2>
-            <p className="text-gray-400 professional-text">
-              Upload your trading chart and get AI-powered analysis using Gemini 2.5 Flash
-            </p>
-            
-            {/* Credit Deduction Animation */}
-            {showCreditDeduction && (
-              <div className="mt-4 p-3 bg-yellow-500/20 border border-yellow-500/30 rounded-lg animate-pulse">
-                <div className="flex items-center justify-center space-x-2 text-yellow-400">
-                  <div className="w-2 h-2 bg-yellow-400 rounded-full animate-ping"></div>
-                  <span className="text-sm font-medium">-1 Credit Deducted</span>
-                </div>
-              </div>
-            )}
+        <p className="text-gray-400 professional-text">
+          Upload your trading chart and get AI-powered analysis using Gemini 2.5 Flash
+        </p>
+
+        {/* Credit Deduction Animation */}
+        {showCreditDeduction && (
+          <div className="mt-4 p-3 bg-yellow-500/20 border border-yellow-500/30 rounded-lg animate-pulse">
+            <div className="flex items-center justify-center space-x-2 text-yellow-400">
+              <div className="w-2 h-2 bg-yellow-400 rounded-full animate-ping"></div>
+              <span className="text-sm font-medium">-1 Credit Deducted</span>
+            </div>
+          </div>
+        )}
         <div className="mt-4 flex justify-center space-x-4 text-sm text-gray-500">
           <span className="flex items-center">
             <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
@@ -305,21 +310,21 @@ export function ChartUpload() {
         </div>
       </div>
 
-          {!analysis ? (
-            <Card className="clean-card hover-lift animate-fade-in-up animate-delay-200">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span className="flex items-center">
-                    <Upload className="w-5 h-5 mr-2" />
-                    Upload Chart Image
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowSettings(!showSettings)}
-                  >
-                    <Settings className="w-4 h-4" />
-                  </Button>
+      {!analysis ? (
+        <Card className="clean-card hover-lift animate-fade-in-up animate-delay-200">
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span className="flex items-center">
+                <Upload className="w-5 h-5 mr-2" />
+                Upload Chart Image
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowSettings(!showSettings)}
+              >
+                <Settings className="w-4 h-4" />
+              </Button>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -360,21 +365,20 @@ export function ChartUpload() {
                 </div>
               )}
 
-                  {/* File Upload Area */}
-                  <div
-                    className={`border-2 border-dashed rounded-lg p-8 text-center transition-all duration-300 hover-lift ${
-                      selectedFile
-                        ? 'border-white/50 bg-white/5 border-glow'
-                        : 'border-white/30 hover:border-white/50 hover:border-glow'
-                    }`}
-                    onDrop={handleDrop}
-                    onDragOver={handleDragOver}
-                  >
+              {/* File Upload Area */}
+              <div
+                className={`border-2 border-dashed rounded-lg p-8 text-center transition-all duration-300 hover-lift ${selectedFile
+                  ? 'border-white/50 bg-white/5 border-glow'
+                  : 'border-white/30 hover:border-white/50 hover:border-glow'
+                  }`}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+              >
                 {preview ? (
                   <div className="space-y-4">
-                    <img 
-                      src={preview} 
-                      alt="Chart preview" 
+                    <img
+                      src={preview}
+                      alt="Chart preview"
                       className="max-w-full max-h-64 mx-auto rounded-lg border"
                     />
                     <div className="flex items-center justify-center space-x-2">
@@ -400,7 +404,7 @@ export function ChartUpload() {
                     </div>
                   </div>
                 )}
-                
+
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -408,14 +412,14 @@ export function ChartUpload() {
                   onChange={handleFileSelect}
                   className="hidden"
                 />
-                
-                    <Button
-                      variant="outline"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="mt-4 border-glow hover-lift"
-                    >
-                      Choose File
-                    </Button>
+
+                <Button
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="mt-4 border-glow hover-lift"
+                >
+                  Choose File
+                </Button>
               </div>
 
               {error && (
@@ -437,14 +441,14 @@ export function ChartUpload() {
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                         Analyzing with Gemini 2.5 Flash...
                       </>
-                        ) : (
-                          <>
-                            <Brain className="w-4 h-4 mr-2" />
-                            Analyze with Gemini 2.5 Flash
-                          </>
-                        )}
+                    ) : (
+                      <>
+                        <Brain className="w-4 h-4 mr-2" />
+                        Analyze with Gemini 2.5 Flash
+                      </>
+                    )}
                   </Button>
-                  
+
                   <Button variant="outline" onClick={resetForm} className="border-glow hover-lift">
                     Reset
                   </Button>
@@ -501,11 +505,11 @@ export function ChartUpload() {
                       return (
                         <>
                           <div className="grid md:grid-cols-2 gap-6">
-                  {/* Basic Info */}
-                <Card className="clean-card">
-                  <CardHeader>
-                    <CardTitle className="text-lg professional-heading">Basic Information</CardTitle>
-                  </CardHeader>
+                            {/* Basic Info */}
+                            <Card className="clean-card">
+                              <CardHeader>
+                                <CardTitle className="text-lg professional-heading">Basic Information</CardTitle>
+                              </CardHeader>
                               <CardContent className="space-y-3">
                                 <div className="flex justify-between">
                                   <span className="font-medium">Symbol:</span>
@@ -526,241 +530,272 @@ export function ChartUpload() {
                                   <span>{safeRender(analysis.timeframe, 'Unknown')}</span>
                                 </div>
                                 <div className="flex justify-between">
+                                  <span className="font-medium">Trade Type:</span>
+                                  <Badge variant="outline" className="border-purple-500/50 text-purple-400">
+                                    {safeRender(analysis.tradeType, 'SWING')}
+                                  </Badge>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="font-medium">Execution:</span>
+                                  <span>{analysis.isSwap ? 'DEX Swap' : 'Exchange Trade'}</span>
+                                </div>
+                                <div className="flex justify-between">
                                   <span className="font-medium">Confidence:</span>
                                   <span>{Number(analysis.confidence || 0)}%</span>
                                 </div>
-                </CardContent>
-              </Card>
+                              </CardContent>
+                            </Card>
 
-                {/* Price Levels */}
-                <Card className="clean-card">
-                  <CardHeader>
-                    <CardTitle className="text-lg professional-heading">Price Levels</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="font-medium">Entry Price:</span>
-                      <span className="text-green-500">
-                        {safeRender(analysis.entryPrice)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium">Target Price:</span>
-                      <span className="text-blue-500">
-                        {safeRender(analysis.targetPrice)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium">Stop Loss:</span>
-                      <span className="text-red-500">
-                        {safeRender(analysis.stopLoss)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium">Risk/Reward:</span>
-                      <span>{Number(analysis.riskRewardRatio || 1)}:1</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium">Risk Level:</span>
-                      <Badge variant={analysis.riskLevel === 'low' ? 'default' : analysis.riskLevel === 'medium' ? 'secondary' : 'destructive'}>
-                        {String(analysis.riskLevel || 'medium')}
-                      </Badge>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+                            {/* Price Levels */}
+                            <Card className="clean-card">
+                              <CardHeader>
+                                <CardTitle className="text-lg professional-heading">Price Levels</CardTitle>
+                              </CardHeader>
+                              <CardContent className="space-y-3">
+                                <div className="flex justify-between">
+                                  <span className="font-medium">Entry Price:</span>
+                                  <span className="text-green-500">
+                                    {safeRender(analysis.entryPrice)}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="font-medium">Target Price:</span>
+                                  <span className="text-blue-500">
+                                    {safeRender(analysis.targetPrice)}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="font-medium">Stop Loss:</span>
+                                  <span className="text-red-500">
+                                    {safeRender(analysis.stopLoss)}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="font-medium">Risk/Reward:</span>
+                                  <span>{Number(analysis.riskRewardRatio || 1)}:1</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="font-medium">Risk Level:</span>
+                                  <Badge variant={analysis.riskLevel === 'low' ? 'default' : analysis.riskLevel === 'medium' ? 'secondary' : 'destructive'}>
+                                    {String(analysis.riskLevel || 'medium')}
+                                  </Badge>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </div>
 
-              {/* Crypto Context */}
-              <Card className="clean-card">
-                <CardHeader>
-                  <CardTitle className="text-lg professional-heading">Crypto Market Context</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground mb-3">{String(analysis.cryptoContext || 'Market context not available')}</p>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <h4 className="font-semibold mb-2 text-green-400">Risk Factors</h4>
-                      <ul className="space-y-1">
-                        {Array.isArray(analysis.riskFactors) ? analysis.riskFactors.map((risk, index) => (
-                          <li key={index} className="text-sm text-muted-foreground">• {String(risk || 'Risk factor not available')}</li>
-                        )) : (
-                          <li className="text-sm text-muted-foreground">• No risk factors available</li>
-                        )}
-                      </ul>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold mb-2 text-blue-400">Position Sizing</h4>
-                      <p className="text-sm text-muted-foreground">{String(analysis.positionSizing || 'Position sizing not available')}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Key Levels */}
-              <Card className="clean-card">
-                <CardHeader>
-                  <CardTitle className="text-lg professional-heading">Key Levels</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div>
-                      <h4 className="font-semibold mb-3 text-green-400">Support Levels</h4>
-                      <div className="space-y-2">
-                        {(() => {
-                          // Handle different keyLevels formats
-                          if (Array.isArray(analysis.keyLevels.support)) {
-                            // Array format: { support: string[], resistance: string[] }
-                            return analysis.keyLevels.support.map((level, index) => (
-                              <div key={index} className="flex items-center space-x-2">
-                                <div className="w-2 h-2 bg-green-500 rounded-full" />
-                                <span className="text-sm">{String(level)}</span>
+                          {/* Crypto Context & Deep Dive */}
+                          <Card className="clean-card">
+                            <CardHeader>
+                              <CardTitle className="text-lg professional-heading flex items-center justify-between">
+                                <span>Market Intelligence</span>
+                                {marketData?.source?.includes('RPC') && (
+                                  <Badge variant="outline" className="text-[10px] border-green-500/30 text-green-500 bg-green-500/5">
+                                    <Zap className="w-3 h-3 mr-1" /> RPC Verified
+                                  </Badge>
+                                )}
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                              <div>
+                                <h4 className="text-sm font-semibold text-gray-400 mb-2 uppercase tracking-tight">Macro Analysis</h4>
+                                <p className="text-muted-foreground text-sm leading-relaxed">{String(analysis.cryptoContext || 'Market context not available')}</p>
                               </div>
-                            ));
-                          } else if (analysis.keyLevels.support && typeof analysis.keyLevels.support === 'object') {
-                            // Object format: { level1: value, level2: value }
-                            return Object.entries(analysis.keyLevels.support).map(([levelName, levelValue]) => (
-                              <div key={levelName} className="flex items-center space-x-2">
-                                <div className="w-2 h-2 bg-green-500 rounded-full" />
-                                <span className="text-sm font-medium">{levelName}:</span>
-                                <span className="text-sm">{String(levelValue)}</span>
+
+                              <div className="p-4 rounded-lg bg-white/5 border border-white/10">
+                                <h4 className="text-sm font-semibold text-purple-400 mb-2 flex items-center">
+                                  <Brain className="w-4 h-4 mr-2" />
+                                  Market Deep Dive
+                                </h4>
+                                <p className="text-xs text-gray-300 leading-relaxed italic">
+                                  "{String(analysis.marketDeepDive || 'Deep market insights not available for this pair.')}"
+                                </p>
                               </div>
-                            ));
-                          } else if (typeof analysis.keyLevels === 'object' && !Array.isArray(analysis.keyLevels)) {
-                            // Timeframe format: { "4H": { support: {...}, resistance: {...} } }
-                            const timeframes = Object.keys(analysis.keyLevels);
-                            if (timeframes.length > 0) {
-                              const firstTimeframe = timeframes[0];
-                              const levels = (analysis.keyLevels as Record<string, any>)[firstTimeframe];
-                              if (levels && levels.support) {
-                                if (Array.isArray(levels.support)) {
-                                  return levels.support.map((level: any, index: number) => (
+
+                              <div className="grid md:grid-cols-2 gap-6 pt-2">
+                                <div>
+                                  <h4 className="font-semibold mb-2 text-green-400 text-sm">Risk Factors</h4>
+                                  <ul className="space-y-1">
+                                    {Array.isArray(analysis.riskFactors) ? analysis.riskFactors.map((risk, index) => (
+                                      <li key={index} className="text-xs text-muted-foreground">• {String(risk || 'Risk factor not available')}</li>
+                                    )) : (
+                                      <li className="text-xs text-muted-foreground">• No risk factors available</li>
+                                    )}
+                                  </ul>
+                                </div>
+                                <div>
+                                  <h4 className="font-semibold mb-2 text-blue-400 text-sm">Position Sizing</h4>
+                                  <p className="text-xs text-muted-foreground leading-relaxed">{String(analysis.positionSizing || 'Position sizing not available')}</p>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+
+                          {/* Key Levels */}
+                          <Card className="clean-card">
+                            <CardHeader>
+                              <CardTitle className="text-lg professional-heading">Key Levels</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="grid md:grid-cols-2 gap-6">
+                                <div>
+                                  <h4 className="font-semibold mb-3 text-green-400">Support Levels</h4>
+                                  <div className="space-y-2">
+                                    {(() => {
+                                      // Handle different keyLevels formats
+                                      if (Array.isArray(analysis.keyLevels.support)) {
+                                        // Array format: { support: string[], resistance: string[] }
+                                        return analysis.keyLevels.support.map((level, index) => (
+                                          <div key={index} className="flex items-center space-x-2">
+                                            <div className="w-2 h-2 bg-green-500 rounded-full" />
+                                            <span className="text-sm">{String(level)}</span>
+                                          </div>
+                                        ));
+                                      } else if (analysis.keyLevels.support && typeof analysis.keyLevels.support === 'object') {
+                                        // Object format: { level1: value, level2: value }
+                                        return Object.entries(analysis.keyLevels.support).map(([levelName, levelValue]) => (
+                                          <div key={levelName} className="flex items-center space-x-2">
+                                            <div className="w-2 h-2 bg-green-500 rounded-full" />
+                                            <span className="text-sm font-medium">{levelName}:</span>
+                                            <span className="text-sm">{String(levelValue)}</span>
+                                          </div>
+                                        ));
+                                      } else if (typeof analysis.keyLevels === 'object' && !Array.isArray(analysis.keyLevels)) {
+                                        // Timeframe format: { "4H": { support: {...}, resistance: {...} } }
+                                        const timeframes = Object.keys(analysis.keyLevels);
+                                        if (timeframes.length > 0) {
+                                          const firstTimeframe = timeframes[0];
+                                          const levels = (analysis.keyLevels as Record<string, any>)[firstTimeframe];
+                                          if (levels && levels.support) {
+                                            if (Array.isArray(levels.support)) {
+                                              return levels.support.map((level: any, index: number) => (
+                                                <div key={index} className="flex items-center space-x-2">
+                                                  <div className="w-2 h-2 bg-green-500 rounded-full" />
+                                                  <span className="text-sm">{String(level)}</span>
+                                                </div>
+                                              ));
+                                            } else if (typeof levels.support === 'object') {
+                                              return Object.entries(levels.support).map(([levelName, levelValue]) => (
+                                                <div key={levelName} className="flex items-center space-x-2">
+                                                  <div className="w-2 h-2 bg-green-500 rounded-full" />
+                                                  <span className="text-sm font-medium">{levelName}:</span>
+                                                  <span className="text-sm">{String(levelValue)}</span>
+                                                </div>
+                                              ));
+                                            }
+                                          }
+                                        }
+                                      }
+                                      // Fallback
+                                      return <div className="text-sm text-muted-foreground">No support levels available</div>;
+                                    })()}
+                                  </div>
+                                </div>
+                                <div>
+                                  <h4 className="font-semibold mb-3 text-red-400">Resistance Levels</h4>
+                                  <div className="space-y-2">
+                                    {(() => {
+                                      // Handle different keyLevels formats
+                                      if (Array.isArray(analysis.keyLevels.resistance)) {
+                                        // Array format: { support: string[], resistance: string[] }
+                                        return analysis.keyLevels.resistance.map((level, index) => (
+                                          <div key={index} className="flex items-center space-x-2">
+                                            <div className="w-2 h-2 bg-red-500 rounded-full" />
+                                            <span className="text-sm">{String(level)}</span>
+                                          </div>
+                                        ));
+                                      } else if (analysis.keyLevels.resistance && typeof analysis.keyLevels.resistance === 'object') {
+                                        // Object format: { level1: value, level2: value }
+                                        return Object.entries(analysis.keyLevels.resistance).map(([levelName, levelValue]) => (
+                                          <div key={levelName} className="flex items-center space-x-2">
+                                            <div className="w-2 h-2 bg-red-500 rounded-full" />
+                                            <span className="text-sm font-medium">{levelName}:</span>
+                                            <span className="text-sm">{String(levelValue)}</span>
+                                          </div>
+                                        ));
+                                      } else if (typeof analysis.keyLevels === 'object' && !Array.isArray(analysis.keyLevels)) {
+                                        // Timeframe format: { "4H": { support: {...}, resistance: {...} } }
+                                        const timeframes = Object.keys(analysis.keyLevels);
+                                        if (timeframes.length > 0) {
+                                          const firstTimeframe = timeframes[0];
+                                          const levels = (analysis.keyLevels as Record<string, any>)[firstTimeframe];
+                                          if (levels && levels.resistance) {
+                                            if (Array.isArray(levels.resistance)) {
+                                              return levels.resistance.map((level: any, index: number) => (
+                                                <div key={index} className="flex items-center space-x-2">
+                                                  <div className="w-2 h-2 bg-red-500 rounded-full" />
+                                                  <span className="text-sm">{String(level)}</span>
+                                                </div>
+                                              ));
+                                            } else if (typeof levels.resistance === 'object') {
+                                              return Object.entries(levels.resistance).map(([levelName, levelValue]) => (
+                                                <div key={levelName} className="flex items-center space-x-2">
+                                                  <div className="w-2 h-2 bg-red-500 rounded-full" />
+                                                  <span className="text-sm font-medium">{levelName}:</span>
+                                                  <span className="text-sm">{String(levelValue)}</span>
+                                                </div>
+                                              ));
+                                            }
+                                          }
+                                        }
+                                      }
+                                      // Fallback
+                                      return <div className="text-sm text-muted-foreground">No resistance levels available</div>;
+                                    })()}
+                                  </div>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+
+                          {/* Technical Analysis */}
+                          <Card className="clean-card">
+                            <CardHeader>
+                              <CardTitle className="text-lg professional-heading">Technical Analysis</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                              <div>
+                                <h4 className="font-semibold mb-2">Analysis</h4>
+                                <p className="text-muted-foreground">{String(analysis.analysis || 'Analysis not available')}</p>
+                              </div>
+                              <div>
+                                <h4 className="font-semibold mb-2">Volume Analysis</h4>
+                                <p className="text-muted-foreground">{String(analysis.volumeAnalysis || 'Volume analysis not available')}</p>
+                              </div>
+                              <div>
+                                <h4 className="font-semibold mb-2">Technical Indicators</h4>
+                                <div className="grid md:grid-cols-2 gap-2">
+                                  {Array.isArray(analysis.technicalIndicators) ? analysis.technicalIndicators.map((indicator, index) => (
                                     <div key={index} className="flex items-center space-x-2">
-                                      <div className="w-2 h-2 bg-green-500 rounded-full" />
-                                      <span className="text-sm">{String(level)}</span>
+                                      <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                                      <span className="text-sm">{String(indicator || 'Indicator not available')}</span>
                                     </div>
-                                  ));
-                                } else if (typeof levels.support === 'object') {
-                                  return Object.entries(levels.support).map(([levelName, levelValue]) => (
-                                    <div key={levelName} className="flex items-center space-x-2">
-                                      <div className="w-2 h-2 bg-green-500 rounded-full" />
-                                      <span className="text-sm font-medium">{levelName}:</span>
-                                      <span className="text-sm">{String(levelValue)}</span>
-                                    </div>
-                                  ));
-                                }
-                              }
-                            }
-                          }
-                          // Fallback
-                          return <div className="text-sm text-muted-foreground">No support levels available</div>;
-                        })()}
-                      </div>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold mb-3 text-red-400">Resistance Levels</h4>
-                      <div className="space-y-2">
-                        {(() => {
-                          // Handle different keyLevels formats
-                          if (Array.isArray(analysis.keyLevels.resistance)) {
-                            // Array format: { support: string[], resistance: string[] }
-                            return analysis.keyLevels.resistance.map((level, index) => (
-                              <div key={index} className="flex items-center space-x-2">
-                                <div className="w-2 h-2 bg-red-500 rounded-full" />
-                                <span className="text-sm">{String(level)}</span>
+                                  )) : (
+                                    <div className="text-sm text-muted-foreground">No technical indicators available</div>
+                                  )}
+                                </div>
                               </div>
-                            ));
-                          } else if (analysis.keyLevels.resistance && typeof analysis.keyLevels.resistance === 'object') {
-                            // Object format: { level1: value, level2: value }
-                            return Object.entries(analysis.keyLevels.resistance).map(([levelName, levelValue]) => (
-                              <div key={levelName} className="flex items-center space-x-2">
-                                <div className="w-2 h-2 bg-red-500 rounded-full" />
-                                <span className="text-sm font-medium">{levelName}:</span>
-                                <span className="text-sm">{String(levelValue)}</span>
+                            </CardContent>
+                          </Card>
+
+                          {/* Recommendations */}
+                          <Card className="clean-card">
+                            <CardHeader>
+                              <CardTitle className="text-lg professional-heading">Trading Recommendations</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="space-y-2">
+                                {Array.isArray(analysis.recommendations) ? analysis.recommendations.map((recommendation, index) => (
+                                  <div key={index} className="flex items-start space-x-3 p-3 bg-blue-500/10 rounded-lg">
+                                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0" />
+                                    <span className="text-sm">{String(recommendation || 'Recommendation not available')}</span>
+                                  </div>
+                                )) : (
+                                  <div className="text-sm text-muted-foreground">No recommendations available</div>
+                                )}
                               </div>
-                            ));
-                          } else if (typeof analysis.keyLevels === 'object' && !Array.isArray(analysis.keyLevels)) {
-                            // Timeframe format: { "4H": { support: {...}, resistance: {...} } }
-                            const timeframes = Object.keys(analysis.keyLevels);
-                            if (timeframes.length > 0) {
-                              const firstTimeframe = timeframes[0];
-                              const levels = (analysis.keyLevels as Record<string, any>)[firstTimeframe];
-                              if (levels && levels.resistance) {
-                                if (Array.isArray(levels.resistance)) {
-                                  return levels.resistance.map((level: any, index: number) => (
-                                    <div key={index} className="flex items-center space-x-2">
-                                      <div className="w-2 h-2 bg-red-500 rounded-full" />
-                                      <span className="text-sm">{String(level)}</span>
-                                    </div>
-                                  ));
-                                } else if (typeof levels.resistance === 'object') {
-                                  return Object.entries(levels.resistance).map(([levelName, levelValue]) => (
-                                    <div key={levelName} className="flex items-center space-x-2">
-                                      <div className="w-2 h-2 bg-red-500 rounded-full" />
-                                      <span className="text-sm font-medium">{levelName}:</span>
-                                      <span className="text-sm">{String(levelValue)}</span>
-                                    </div>
-                                  ));
-                                }
-                              }
-                            }
-                          }
-                          // Fallback
-                          return <div className="text-sm text-muted-foreground">No resistance levels available</div>;
-                        })()}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Technical Analysis */}
-              <Card className="clean-card">
-                <CardHeader>
-                  <CardTitle className="text-lg professional-heading">Technical Analysis</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <h4 className="font-semibold mb-2">Analysis</h4>
-                    <p className="text-muted-foreground">{String(analysis.analysis || 'Analysis not available')}</p>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold mb-2">Volume Analysis</h4>
-                    <p className="text-muted-foreground">{String(analysis.volumeAnalysis || 'Volume analysis not available')}</p>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold mb-2">Technical Indicators</h4>
-                    <div className="grid md:grid-cols-2 gap-2">
-                      {Array.isArray(analysis.technicalIndicators) ? analysis.technicalIndicators.map((indicator, index) => (
-                        <div key={index} className="flex items-center space-x-2">
-                          <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                          <span className="text-sm">{String(indicator || 'Indicator not available')}</span>
-                        </div>
-                      )) : (
-                        <div className="text-sm text-muted-foreground">No technical indicators available</div>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Recommendations */}
-              <Card className="clean-card">
-                <CardHeader>
-                  <CardTitle className="text-lg professional-heading">Trading Recommendations</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {Array.isArray(analysis.recommendations) ? analysis.recommendations.map((recommendation, index) => (
-                      <div key={index} className="flex items-start space-x-3 p-3 bg-blue-500/10 rounded-lg">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0" />
-                        <span className="text-sm">{String(recommendation || 'Recommendation not available')}</span>
-                      </div>
-                    )) : (
-                      <div className="text-sm text-muted-foreground">No recommendations available</div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+                            </CardContent>
+                          </Card>
                         </>
                       );
                     } catch (error) {

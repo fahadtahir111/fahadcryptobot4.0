@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { geminiService } from '@/lib/geminiService';
-import { PrismaClient, Prisma } from '@prisma/client';
+import { prisma } from '@/lib/database';
+import { Prisma } from '@prisma/client';
 import jwt from 'jsonwebtoken';
-
-const prisma = new PrismaClient();
 
 // Configure for static export
 export const dynamic = 'force-dynamic';
@@ -35,9 +34,9 @@ export async function POST(req: NextRequest) {
     if (userId) {
       const user = await prisma.user.findUnique({
         where: { id: userId },
-        select: { 
-          credits: true, 
-          isActive: true 
+        select: {
+          credits: true,
+          isActive: true
         }
       });
 
@@ -65,23 +64,35 @@ export async function POST(req: NextRequest) {
     // Validate API key
     const isApiKeyValid = await geminiService.validateApiKey();
     if (!isApiKeyValid) {
-        return NextResponse.json({
-          error: 'Gemini 2.5 Flash API key not configured or invalid',
-          details: 'Please configure GEMINI_API_KEY in your environment variables'
-        }, { status: 500 });
+      return NextResponse.json({
+        error: 'Gemini 2.5 Flash API key not configured or invalid',
+        details: 'Please configure GEMINI_API_KEY in your environment variables'
+      }, { status: 500 });
     }
 
     // Analyze chart using AI
     let analysis: any;
+    let marketData: any = null;
     try {
+      // Fetch real-time market data
+      if (userId && symbol) {
+        const { nodeService } = await import('@/lib/nodeService');
+        marketData = await nodeService.getMarketData(userId, symbol);
+      }
+
+      if (!marketData && symbol) {
+        const { fetchMarketData } = await import('@/lib/marketData');
+        marketData = await fetchMarketData(symbol);
+      }
+
       analysis = await geminiService.analyzeChart({
         imageBase64,
         symbol,
         timeframe,
         additionalContext,
-      });
+      }, marketData);
     } catch (aiError) {
-      // Re-throw the error to be handled by the outer catch block
+      console.error('AI Analysis failed:', aiError);
       throw aiError;
     }
 
@@ -100,7 +111,7 @@ export async function POST(req: NextRequest) {
             symbol: symbol || 'Unknown',
             timeframe: timeframe || 'Unknown',
             imageUrl: savedImageUrl,
-            analysis: (analysis as unknown) as Prisma.InputJsonValue,
+            analysis: analysis as any,
             creditsUsed: 1,
           },
         });
@@ -118,45 +129,38 @@ export async function POST(req: NextRequest) {
             description: 'Chart analysis',
           },
         });
+      }, {
+        timeout: 60000 // Increase timeout to 60 seconds for maximum reliability with large image data
       });
     }
 
     return NextResponse.json({
       success: true,
       analysis,
+      marketData,
       timestamp: new Date().toISOString(),
     });
 
   } catch (error) {
     console.error('Chart analysis error:', error);
-    
-    if (error instanceof Error) {
-        // Handle non-chart image error
-        if (error.message.startsWith('NOT_CHART:')) {
-          return NextResponse.json({
-            error: 'Invalid image. Please upload a trading chart image (candlestick/line chart).',
-            details: 'The uploaded image is not a trading chart. Please upload a candlestick or line chart for analysis.'
-          }, { status: 400 });
-        }
 
-        if (error.message.includes('Gemini API key')) {
-          return NextResponse.json({
-            error: 'API key configuration error',
-            details: error.message
-          }, { status: 500 });
-        }
+    const errorMessage = error instanceof Error ? error.message : 'Failed to analyze chart';
 
-        if (error.message.includes('Gemini API error')) {
-          return NextResponse.json({
-            error: 'Gemini 2.5 Flash API error',
-            details: error.message
-          }, { status: 500 });
-        }
+    // Handle specifically known error types
+    if (errorMessage.startsWith('NOT_CHART:')) {
+      return NextResponse.json({
+        error: 'Invalid image. Please upload a trading chart image (candlestick/line chart).',
+        details: errorMessage.replace('NOT_CHART: ', '')
+      }, { status: 400 });
     }
 
-    return NextResponse.json({ 
-      error: 'Failed to analyze chart',
-      details: 'An unexpected error occurred during analysis'
+    if (errorMessage.includes('Insufficient credits')) {
+      return NextResponse.json({ error: 'Insufficient credits' }, { status: 400 });
+    }
+
+    return NextResponse.json({
+      error: 'Analysis Failed',
+      details: errorMessage || 'An unexpected error occurred during analysis'
     }, { status: 500 });
   }
 }

@@ -33,15 +33,15 @@ export function formatRiskReward(ratio: number): string {
 export function validateImageFile(file: File): { valid: boolean; error?: string } {
   const maxSize = 10 * 1024 * 1024; // 10MB
   const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-  
+
   if (!allowedTypes.includes(file.type)) {
     return { valid: false, error: 'Please select a valid image file (PNG, JPG, JPEG)' };
   }
-  
+
   if (file.size > maxSize) {
     return { valid: false, error: 'File size too large. Please select an image under 10MB.' };
   }
-  
+
   return { valid: true };
 }
 
@@ -75,15 +75,15 @@ export function sanitizeApiResponse(data: any): any {
   if (typeof data === 'string') {
     return data;
   }
-  
+
   if (typeof data === 'number') {
     return data;
   }
-  
+
   if (Array.isArray(data)) {
     return data.map(item => sanitizeApiResponse(item));
   }
-  
+
   if (data && typeof data === 'object') {
     const sanitized: any = {};
     for (const [key, value] of Object.entries(data)) {
@@ -91,7 +91,7 @@ export function sanitizeApiResponse(data: any): any {
     }
     return sanitized;
   }
-  
+
   return data;
 }
 
@@ -122,17 +122,20 @@ export function formatAnalysisData(analysis: any) {
     riskRewardRatio: Number(analysis.riskRewardRatio || 1.0),
     keyLevels: analysis.keyLevels || { support: [], resistance: [] },
     volumeAnalysis: String(analysis.volumeAnalysis || 'Volume analysis not available'),
-    technicalIndicators: Array.isArray(analysis.technicalIndicators) 
-      ? analysis.technicalIndicators.map(String) 
+    technicalIndicators: Array.isArray(analysis.technicalIndicators)
+      ? analysis.technicalIndicators.map(String)
       : [],
-    recommendations: Array.isArray(analysis.recommendations) 
-      ? analysis.recommendations.map(String) 
+    recommendations: Array.isArray(analysis.recommendations)
+      ? analysis.recommendations.map(String)
       : [],
     cryptoContext: String(analysis.cryptoContext || 'Market context not available'),
-    riskFactors: Array.isArray(analysis.riskFactors) 
-      ? analysis.riskFactors.map(String) 
+    riskFactors: Array.isArray(analysis.riskFactors)
+      ? analysis.riskFactors.map(String)
       : [],
     positionSizing: String(analysis.positionSizing || 'Position sizing not available'),
+    tradeType: analysis.tradeType || 'SWING',
+    isSwap: !!analysis.isSwap,
+    marketDeepDive: String(analysis.marketDeepDive || 'Deep dive not available'),
     note: analysis.note
   };
 }

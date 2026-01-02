@@ -15,9 +15,9 @@ interface TimeframeLevels {
 
 type KeyLevels =
   | {
-      support: string[];
-      resistance: string[];
-    }
+    support: string[];
+    resistance: string[];
+  }
   | Record<string, TimeframeLevels>;
 
 export interface ChartAnalysisResponse {
@@ -39,6 +39,9 @@ export interface ChartAnalysisResponse {
   cryptoContext: string;
   riskFactors: string[];
   positionSizing: string;
+  tradeType: 'SCALP' | 'DAY_TRADE' | 'SWING' | 'POSITION';
+  isSwap: boolean;
+  marketDeepDive: string;
   note?: string;
 }
 
@@ -75,15 +78,17 @@ export class GeminiService {
   }
 
   public async analyzeChart(
-    request: ChartAnalysisRequest
+    request: ChartAnalysisRequest,
+    marketData?: any
   ): Promise<ChartAnalysisResponse> {
     try {
-      if (!process.env.GEMINI_API_KEY) {
-        console.warn('⚠️ No Gemini 2.5 Flash API key configured — returning mock analysis');
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        console.warn('⚠️ No Gemini API key configured — returning mock analysis');
         return this.getMockAnalysis(request);
       }
 
-      const prompt = this.buildAnalysisPrompt(request);
+      const prompt = this.buildAnalysisPrompt(request, marketData);
 
       await this.acquireSlot();
       try {
@@ -101,40 +106,57 @@ export class GeminiService {
             this.requestTimeoutMs,
           );
           const response = await result.response;
+          if (!response) {
+            throw new Error('Gemini API error: No response received');
+          }
           return response.text();
         };
 
         const analysisText = await this.withRetry(execCall, this.maxRetries);
         console.log(`✅ Successfully used SignalX AI (${this.modelName})`);
-        
+
         try {
           const parsedResponse = this.parseAnalysisResponse(analysisText, request);
           return formatAnalysisData(parsedResponse);
         } catch (parseError) {
-          // Re-throw NOT_CHART errors immediately
           if (parseError instanceof Error && parseError.message.startsWith('NOT_CHART:')) {
             throw parseError;
           }
-          // For other parsing errors, fall through to outer catch
-          throw parseError;
+          console.error('Failed to parse Gemini response:', parseError);
+          throw new Error(`Failed to parse AI response: ${parseError instanceof Error ? parseError.message : String(parseError)}`);
         }
       } finally {
         this.releaseSlot();
       }
     } catch (error) {
-      console.error('Gemini 2.5 Flash analysis error:', error);
-      
-      // Re-throw NOT_CHART errors instead of returning mock data
-      if (error instanceof Error && error.message.startsWith('NOT_CHART:')) {
+      console.error('Gemini analysis error:', error);
+
+      // Re-throw critical errors instead of falling back to mock
+      if (error instanceof Error && (
+        error.message.startsWith('NOT_CHART:') ||
+        error.message.includes('API key') ||
+        error.message.includes('timeout') ||
+        error.message.includes('parsed')
+      )) {
         throw error;
       }
-      
-      return this.getMockAnalysis(request);
+
+      // Only fallback to mock if it's strictly a configuration issue (key missing)
+      if (!process.env.GEMINI_API_KEY) {
+        return this.getMockAnalysis(request);
+      }
+
+      throw error;
     }
   }
 
-  private buildAnalysisPrompt(request: ChartAnalysisRequest): string {
+  private buildAnalysisPrompt(request: ChartAnalysisRequest, marketData?: any): string {
+    const marketContextString = marketData
+      ? `\nCURRENT MARKET DATA:\n${JSON.stringify(marketData, null, 2)}`
+      : '';
+
     return `You are a senior crypto technical analyst with 10+ years of experience. First determine if the provided IMAGE is a TRADING CHART (candlesticks/lines, axes, indicators, exchange UI). Return ONLY valid JSON.
+${marketContextString}
 
 {
   "isChart": true,
@@ -146,6 +168,9 @@ export class GeminiService {
   "confidence": 85,
   "riskLevel": "low|medium|high",
   "riskRewardRatio": 1.72,
+  "tradeType": "SCALP|DAY_TRADE|SWING|POSITION",
+  "isSwap": true,
+  "marketDeepDive": "A deep professional analysis of liquidity, order book heatmaps, and macro crypto trends relating to this chart.",
   
   "entryPrice": "109.000",
   "targetPrice": "112.800", 
@@ -193,6 +218,8 @@ IMPORTANT RULES:
 - Use actual numbers for prices, not strings with $ symbols
 - Ensure all arrays have content, never empty arrays
 - Provide detailed, professional technical analysis
+- "tradeType" definition: SCALP (minutes), DAY_TRADE (hours), SWING (days/weeks), POSITION (months)
+- "isSwap" should be true if this is better handled as a simple DeFi swap/DEX trade than a CEX limit order.
 - Include comprehensive market context and risk factors
 - Make analysis match the quality and depth shown in professional trading reports
 
@@ -226,14 +253,14 @@ Timeframe: ${request.timeframe || 'Unknown'}`;
         const riskRewardRatio = Math.max(0.1, parsed.riskRewardRatio || 1.72);
 
         // Ensure price levels are never null or N/A
-        const entryPrice = parsed.entryPrice && parsed.entryPrice !== 'N/A' 
-          ? String(parsed.entryPrice) 
+        const entryPrice = parsed.entryPrice && parsed.entryPrice !== 'N/A'
+          ? String(parsed.entryPrice)
           : '109.000';
-        const targetPrice = parsed.targetPrice && parsed.targetPrice !== 'N/A' 
-          ? String(parsed.targetPrice) 
+        const targetPrice = parsed.targetPrice && parsed.targetPrice !== 'N/A'
+          ? String(parsed.targetPrice)
           : '112.800';
-        const stopLoss = parsed.stopLoss && parsed.stopLoss !== 'N/A' 
-          ? String(parsed.stopLoss) 
+        const stopLoss = parsed.stopLoss && parsed.stopLoss !== 'N/A'
+          ? String(parsed.stopLoss)
           : '106.800';
 
         // Ensure arrays are never empty
@@ -248,29 +275,29 @@ Timeframe: ${request.timeframe || 'Unknown'}`;
         const technicalIndicators = Array.isArray(parsed.technicalIndicators) && parsed.technicalIndicators.length > 0
           ? parsed.technicalIndicators
           : [
-              'RSI: 65 (neutral to bullish momentum)',
-              'MACD: Bullish crossover with increasing histogram',
-              'Moving Averages: Price above 50MA and 200MA',
-              'Volume: Increasing on upward moves'
-            ];
+            'RSI: 65 (neutral to bullish momentum)',
+            'MACD: Bullish crossover with increasing histogram',
+            'Moving Averages: Price above 50MA and 200MA',
+            'Volume: Increasing on upward moves'
+          ];
 
         const recommendations = Array.isArray(parsed.recommendations) && parsed.recommendations.length > 0
           ? parsed.recommendations
           : [
-              'Wait for confirmation above resistance with volume',
-              'Set stop loss for risk management',
-              'Target higher levels for profit taking',
-              'Monitor volume for sustained buying pressure'
-            ];
+            'Wait for confirmation above resistance with volume',
+            'Set stop loss for risk management',
+            'Target higher levels for profit taking',
+            'Monitor volume for sustained buying pressure'
+          ];
 
         const riskFactors = Array.isArray(parsed.riskFactors) && parsed.riskFactors.length > 0
           ? parsed.riskFactors
           : [
-              'High market volatility inherent to cryptocurrencies',
-              'Potential for unexpected bearish news or adverse regulatory developments',
-              'Risk of false breakout if volume doesn\'t sustain',
-              'Influence of global macroeconomic factors'
-            ];
+            'High market volatility inherent to cryptocurrencies',
+            'Potential for unexpected bearish news or adverse regulatory developments',
+            'Risk of false breakout if volume doesn\'t sustain',
+            'Influence of global macroeconomic factors'
+          ];
 
         return {
           symbol,
@@ -290,7 +317,10 @@ Timeframe: ${request.timeframe || 'Unknown'}`;
           recommendations,
           cryptoContext: parsed.cryptoContext || 'The broader cryptocurrency market exhibits strong positive sentiment with institutional demand providing fundamental support.',
           riskFactors,
-          positionSizing: parsed.positionSizing || 'Allocate 1-2% of total trading capital per trade. Strict adherence to stop loss is crucial for risk management.',
+          positionSizing: parsed.positionSizing || 'Allocate 1-2% of total trading capital per trade.',
+          tradeType: parsed.tradeType || 'SWING',
+          isSwap: !!parsed.isSwap,
+          marketDeepDive: parsed.marketDeepDive || 'Global crypto liquidity remains high with strong stablecoin inflows.',
         };
       }
     } catch (error) {
@@ -332,12 +362,15 @@ Timeframe: ${request.timeframe || 'Unknown'}`;
       ],
       cryptoContext: 'The broader cryptocurrency market exhibits strong positive sentiment, highlighted by Bitcoin spot ETFs experiencing significant net inflows (approximately 15,000 BTC or $1.6 billion) for the third consecutive week. This robust institutional demand, despite some outflows from specific funds, provides a strong fundamental tailwind for Bitcoin\'s price. Bitcoin\'s market capitalization stands at $2.17T, underscoring its dominant position and market health.',
       riskFactors: [
-        'High market volatility inherent to cryptocurrencies, potentially leading to rapid price swings',
-        'Potential for unexpected bearish news or adverse regulatory developments',
-        'Risk of a false breakout from the consolidation if buying volume does not sustain at higher levels',
-        'Influence of global macroeconomic factors on risk-on assets like Bitcoin'
+        'High market volatility inherent to cryptocurrencies',
+        'Potential for unexpected bearish news',
+        'Risk of a false breakout if buying volume does not sustain',
+        'Influence of global macroeconomic factors'
       ],
-      positionSizing: 'Allocate 1-2% of total trading capital per trade. Strict adherence to the recommended stop loss is crucial for effective risk management.',
+      positionSizing: 'Allocate 1-2% of total trading capital per trade.',
+      tradeType: 'SWING',
+      isSwap: false,
+      marketDeepDive: 'Institutional adoption is accelerating, with major financial players integrating crypto assets into their portfolios.',
       note: '⚠️ This is mock data (Gemini 2.5 Flash API unavailable)',
     };
   }
